@@ -77,6 +77,63 @@ services:
     networks:
       - izamanagement-preview
 
+  # Queue Worker
+  queue-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: izamanagement-queue-preview
+    restart: unless-stopped
+    working_dir: /var/www/html
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=izamanagement
+      - DB_USERNAME=izauser
+      - DB_PASSWORD=secure_password_2025
+      - REDIS_HOST=redis
+      - QUEUE_CONNECTION=redis
+      - CACHE_DRIVER=redis
+      - SESSION_DRIVER=redis
+    command: php artisan queue:work --tries=3 --max-time=3600
+    networks:
+      - izamanagement-preview
+    depends_on:
+      - app
+      - postgres
+      - redis
+
+  # Scheduler
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: izamanagement-scheduler-preview
+    restart: unless-stopped
+    working_dir: /var/www/html
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=izamanagement
+      - DB_USERNAME=izauser
+      - DB_PASSWORD=secure_password_2025
+    command: >
+      sh -c "while true; do
+        php artisan schedule:run --verbose --no-interaction &
+        sleep 60
+      done"
+    networks:
+      - izamanagement-preview
+    depends_on:
+      - app
+      - postgres
+
 volumes:
   postgres-data-preview:
     driver: local
