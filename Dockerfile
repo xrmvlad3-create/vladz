@@ -54,7 +54,8 @@ COPY --chown=www:www . /var/www/html
 # Install dependencies
 USER www
 RUN composer install --no-dev --optimize-autoloader
-RUN npm ci && npm run build
+# Use npm install if lockfile is not present
+RUN npm install && npm run build
 
 # Switch back to root for service configuration
 USER root

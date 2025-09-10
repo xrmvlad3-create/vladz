@@ -14,6 +14,8 @@ class MedicalConditionRequest extends FormRequest
 
     public function rules(): array
     {
+        $language = $this->input('language', 'ro');
+
         $rules = [
             'name' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string', 'min:100'],
@@ -62,12 +64,14 @@ class MedicalConditionRequest extends FormRequest
         if ($this->isMethod('PUT') || $this->isMethod('PATCH')) {
             $medicalCondition = $this->route('medical_condition');
 
-            // Check uniqueness excluding current record
+            // Uniqueness per language when updating
             $rules['name'][] = Rule::unique('medical_conditions', 'name')
-                                 ->ignore($medicalCondition?->id);
+                ->where(fn ($q) => $q->where('language', $language))
+                ->ignore($medicalCondition?->id);
         } else {
-            // For creation, ensure name uniqueness
-            $rules['name'][] = Rule::unique('medical_conditions', 'name');
+            // For creation, ensure name uniqueness per language
+            $rules['name'][] = Rule::unique('medical_conditions', 'name')
+                ->where(fn ($q) => $q->where('language', $language));
         }
 
         return $rules;
@@ -77,7 +81,7 @@ class MedicalConditionRequest extends FormRequest
     {
         return [
             'name.required' => 'Numele afecțiunii medicale este obligatoriu.',
-            'name.unique' => 'Această afecțiune medicală există deja în sistem.',
+            'name.unique' => 'Această afecțiune medicală există deja în sistem pentru limba selectată.',
             'description.required' => 'Descrierea este obligatorie.',
             'description.min' => 'Descrierea trebuie să conțină cel puțin 100 de caractere.',
             'category.required' => 'Categoria este obligatorie.',

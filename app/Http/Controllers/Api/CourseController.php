@@ -41,6 +41,12 @@ class CourseController extends Controller
                 $query->active();
             }
 
+            // Language filter (default 'ro', pass language=all to disable)
+            $language = $request->get('language', 'ro');
+            if ($language !== 'all') {
+                $query->where('language', $language);
+            }
+
             // Search functionality
             if ($request->filled('search')) {
                 $searchTerm = $request->search;
@@ -242,9 +248,8 @@ class CourseController extends Controller
                 $course->progress_percentage = $enrollment?->progress_percentage ?? 0;
 
                 if ($enrollment) {
-                    $course->module_progress = $enrollment->moduleProgress()
-                                                        ->with('courseModule:id,title')
-                                                        ->get();
+                    // Use JSON-based module progress if no dedicated relation/table exists
+                    $course->module_progress = collect($enrollment->module_progress ?? [])->values();
                 }
             } else {
                 $course->can_enroll = $course->isEnrollmentOpen();
