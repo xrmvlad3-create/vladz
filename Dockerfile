@@ -53,9 +53,14 @@ COPY --chown=www:www . /var/www/html
 
 # Install dependencies
 USER www
+# Ensure .env exists for artisan commands during build
+RUN php -r "file_exists('.env') || copy('.env.production', '.env');"
 RUN composer install --no-dev --optimize-autoloader
-# Use npm install if lockfile is not present
-RUN npm install && npm run build
+# Generate application key for .env
+RUN php artisan key:generate --ansi || true
+# Build frontend assets (use npm ci if lockfile exists, otherwise install)
+RUN npm ci || npm install
+RUN npm run build
 
 # Switch back to root for service configuration
 USER root
