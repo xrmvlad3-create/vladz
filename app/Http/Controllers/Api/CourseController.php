@@ -41,6 +41,12 @@ class CourseController extends Controller
                 $query->active();
             }
 
+            // Language filter (default 'ro', pass language=all to disable)
+            $language = $request->get('language', 'ro');
+            if ($language !== 'all') {
+                $query->where('language', $language);
+            }
+
             // Search functionality
             if ($request->filled('search')) {
                 $searchTerm = $request->search;

@@ -14,6 +14,8 @@ class CourseRequest extends FormRequest
 
     public function rules(): array
     {
+        $language = $this->input('language', 'ro');
+
         $rules = [
             'title' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string', 'min:200'],
@@ -59,12 +61,14 @@ class CourseRequest extends FormRequest
         if ($this->isMethod('PUT') || $this->isMethod('PATCH')) {
             $course = $this->route('course');
 
-            // Check uniqueness excluding current record
+            // Uniqueness per language when updating
             $rules['title'][] = Rule::unique('courses', 'title')
-                              ->ignore($course?->id);
+                ->where(fn ($q) => $q->where('language', $language))
+                ->ignore($course?->id);
         } else {
-            // For creation, ensure title uniqueness
-            $rules['title'][] = Rule::unique('courses', 'title');
+            // For creation, ensure title uniqueness per language
+            $rules['title'][] = Rule::unique('courses', 'title')
+                ->where(fn ($q) => $q->where('language', $language));
         }
 
         return $rules;
@@ -74,7 +78,7 @@ class CourseRequest extends FormRequest
     {
         return [
             'title.required' => 'Titlul cursului este obligatoriu.',
-            'title.unique' => 'Există deja un curs cu acest titlu.',
+            'title.unique' => 'Există deja un curs cu acest titlu în limba selectată.',
             'description.required' => 'Descrierea cursului este obligatorie.',
             'description.min' => 'Descrierea trebuie să conțină cel puțin 200 de caractere.',
             'category.required' => 'Categoria cursului este obligatorie.',

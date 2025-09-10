@@ -33,6 +33,12 @@ class MedicalConditionController extends Controller
             $query = MedicalCondition::with(['creator:id,name,specialization'])
                                    ->published();
 
+            // Language filter (default 'ro', pass language=all to disable)
+            $language = $request->get('language', 'ro');
+            if ($language !== 'all') {
+                $query->where('language', $language);
+            }
+
             // Search functionality
             if ($request->filled('search')) {
                 $searchTerm = $request->search;
@@ -370,6 +376,12 @@ class MedicalConditionController extends Controller
                 $query = MedicalCondition::published()
                     ->with('creator:id,name,specialization');
 
+                // Language filter
+                $language = $request->get('language', 'ro');
+                if ($language !== 'all') {
+                    $query->where('language', $language);
+                }
+
                 // Full text search
                 $searchTerm = $request->query;
                 $query->where(function ($q) use ($searchTerm) {
@@ -434,6 +446,12 @@ class MedicalConditionController extends Controller
         try {
             $query = MedicalCondition::published()->with('creator:id,name,specialization');
 
+            // Language filter
+            $language = $request->get('language', 'ro');
+            if ($language !== 'all') {
+                $query->where('language', $language);
+            }
+
             if ($request->filled('icd_10_code')) {
                 $query->where('icd_10_code', $request->icd_10_code);
             }
@@ -495,42 +513,48 @@ class MedicalConditionController extends Controller
     public function stats(): JsonResponse
     {
         try {
-            $cacheKey = 'medical_conditions_stats';
+            $language = request()->get('language', 'ro');
+            $cacheKey = 'medical_conditions_stats_' . $language;
 
-            $stats = Cache::remember($cacheKey, 3600, function () { // 1 hour cache
+            $stats = Cache::remember($cacheKey, 3600, function () use ($language) { // 1 hour cache
+                $base = MedicalCondition::published();
+                if ($language !== 'all') {
+                    $base->where('language', $language);
+                }
+
                 return [
-                    'total_conditions' => MedicalCondition::published()->count(),
-                    'by_category' => MedicalCondition::published()
+                    'total_conditions' => (clone $base)->count(),
+                    'by_category' => (clone $base)
                         ->select('category', DB::raw('COUNT(*) as count'))
                         ->groupBy('category')
                         ->orderBy('count', 'desc')
                         ->get(),
-                    'by_severity' => MedicalCondition::published()
+                    'by_severity' => (clone $base)
                         ->select('severity', DB::raw('COUNT(*) as count'))
                         ->groupBy('severity')
                         ->orderBy('count', 'desc')
                         ->get(),
-                    'by_evidence_level' => MedicalCondition::published()
+                    'by_evidence_level' => (clone $base)
                         ->select('evidence_level', DB::raw('COUNT(*) as count'))
                         ->groupBy('evidence_level')
                         ->whereNotNull('evidence_level')
                         ->orderBy('evidence_level')
                         ->get(),
-                    'recent_additions' => MedicalCondition::published()
+                    'recent_additions' => (clone $base)
                         ->where('created_at', '>=', now()->subDays(30))
                         ->count(),
-                    'needs_review' => MedicalCondition::published()
+                    'needs_review' => (clone $base)
                         ->needsReview()
                         ->count(),
-                    'high_prevalence' => MedicalCondition::published()
+                    'high_prevalence' => (clone $base)
                         ->highPrevalence()
                         ->count(),
-                    'most_bookmarked' => MedicalCondition::published()
+                    'most_bookmarked' => (clone $base)
                         ->withCount('bookmarks')
                         ->orderBy('bookmarks_count', 'desc')
                         ->limit(5)
                         ->get(['id', 'name', 'category']),
-                    'top_rated' => MedicalCondition::published()
+                    'top_rated' => (clone $base)
                         ->withAvg('reviews', 'rating')
                         ->having('reviews_avg_rating', '>', 0)
                         ->orderBy('reviews_avg_rating', 'desc')
