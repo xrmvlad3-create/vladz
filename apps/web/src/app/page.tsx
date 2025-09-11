@@ -29,12 +29,15 @@ export default async function HomePage() {
             IzaManagement te ajută să practici mai bine, mai rapid: bibliotecă clinică curată, redactare asistată,
             cursuri, echipe pentru Rezidenți și colegi — totul bilingv, pe o platformă modernă.
           </p>
-          <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+          <div style={{ display: "flex", gap: 10, marginTop: 12, flexWrap: "wrap" }}>
             <a href="/login" style={{ background: "#111827", color: "#fff", borderRadius: 8, padding: "10px 14px", fontWeight: 700 }}>
               Începe acum
             </a>
             <a href="/ai" style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: "10px 14px", fontWeight: 600, color: "#111827" }}>
               Încearcă asistentul AI
+            </a>
+            <a href="/request-access" style={{ border: "1px solid #111827", borderRadius: 8, padding: "10px 14px", fontWeight: 700, color: "#111827" }}>
+              Cere acces
             </a>
             <a href="/preview" style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: "10px 14px", fontWeight: 600, color: "#111827" }}>
               Vezi interfața
@@ -128,7 +131,8 @@ export default async function HomePage() {
               <li>Import structură + suport editorial</li>
               <li>Integrare SSO (la cerere)</li>
             </ul>
-            <div style={{ marginTop: 10 }}>
+            <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+              <a href="/request-access" style={{ background: "#111827", color: "#fff", borderRadius: 8, padding: "8px 12px", fontWeight: 700 }}>Cere acces</a>
               <a href="mailto:contact@izamanagement.ro" style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: "8px 12px", fontWeight: 700, color: "#111827" }}>Contactează-ne</a>
             </div>
           </div>

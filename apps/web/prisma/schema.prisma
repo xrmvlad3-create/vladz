@@ -301,3 +301,18 @@ model VerificationToken {
 
   @@unique([identifier, token])
 }
+
+/// Lead capture for request access
+model RequestAccess {
+  id           String   @id @default(uuid())
+  email        String
+  name         String?
+  role         String?   // medic, rezident, student, etc.
+  organization String?
+  message      String?   @db.Text
+  source       String?   // utm or ref
+  status       String    @default("new") // new, contacted, closed
+  createdAt    DateTime  @default(now())
+
+  @@index([email])
+}
