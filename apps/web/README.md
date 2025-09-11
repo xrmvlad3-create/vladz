@@ -33,7 +33,7 @@ Default seed admin:
 - Email: `admin@izamanagement.ro`
 - Password: `ADMIN_PASSWORD` from `.env` (default `admin1234`)
 
-## Vercel deployment
+## Vercel deployment (free)
 
 - Import the repository in Vercel.
 - In Settings → General, set "Root Directory" to `apps/web`.
@@ -46,6 +46,7 @@ Default seed admin:
   - `SEED_SECRET` → random string (protects POST /api/seed)
   - (optional) `ADMIN_PASSWORD` → initial admin password
   - (optional) `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` → for cron/queues
+  - (optional) `CRON_SECRET` → if you also set it in GitHub Actions (see below)
 
 Seed after first deploy (optional, idempotent):
 
@@ -53,11 +54,16 @@ Seed after first deploy (optional, idempotent):
 curl -X POST https://<your-app>.vercel.app/api/seed -H "x-seed-secret: <SEED_SECRET>"
 ```
 
-## Health & Cron
+## Health & Cron (no paid add‑ons)
 
 - Health: `GET /api/health` → `healthy`
-- Cron: configured in `vercel.json` to hit `GET /api/cron/every-15m` every 15 minutes.
-  - Writes a timestamp to Upstash key `last_cron_run`.
+- Cron: Use the included GitHub Actions workflow instead of Vercel-paid cron.
+  1. Go to your repo → Settings → Secrets and variables → Actions.
+  2. Add repository secrets:
+     - `CRON_URL` = `https://<your-app>.vercel.app/api/cron/every-15m`
+     - `CRON_SECRET` = (optional) the same value as `CRON_SECRET` in Vercel envs
+  3. The workflow `.github/workflows/cron.yml` runs every 15 minutes and calls the endpoint.
+  - If `UPSTASH_*` vars are set, the cron writes a timestamp to key `last_cron_run`. If not, it no‑ops safely.
 
 ## Notes
 
