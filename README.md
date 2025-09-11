@@ -4,10 +4,24 @@
 
 [![Version](https://img.shields.io/badge/version-2025.1.0-blue.svg)](https://github.com/izamanagement/platform)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![PHP](https://img.shields.io/badge/PHP-8.2+-777BB4.svg?logo=php)](https://php.net/)
-[![Laravel](https://img.shields.io/badge/Laravel-11.0-FF2D20.svg?logo=laravel)](https://laravel.com/)
-[![React](https://img.shields.io/badge/React-18.0-61DAFB.svg?logo=react)](https://reactjs.org/)
+[![React](https://img.shields.io/badge/Next.js-14-000000.svg?logo=next.js)](https://nextjs.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-336791.svg?logo=postgresql)](https://postgresql.org/)
+[![Vercel](https://img.shields.io/badge/Deploy-Vercel-000000.svg?logo=vercel)](https://vercel.com/)
+
+## ✅ Free hosting stack (production-capable)
+
+Acum aplicația rulează nativ pe Vercel (gratuit) folosind Next.js App Router + Prisma + NextAuth + Postgres (Neon/Supabase/Vercel Postgres) + (opțional) Upstash Redis pentru cron/rate‑limit. Codul trăiește în `apps/web`.
+
+- Ghid rapid: [apps/web/README.md](apps/web/README.md)
+- Endpointuri API folosind rute Next.js:
+  - `/api/health`
+  - `/api/seed` (protejată cu `SEED_SECRET`)
+  - `/api/cron/every-15m` (opțional, protejată cu `CRON_SECRET`)
+  - `/api/ai-assistant/message` (Groq)
+  - `/api/ai-assistant/differential-diagnosis` (Groq)
+- Previzualizare statică: `/preview` (copiată în `apps/web/public/preview`)
+
+Nota: Stack-ul Laravel rămâne în repo pentru referință, dar nu este necesar pentru deploy-ul gratuit.
 
 ## 🎯 Despre Proiect
 

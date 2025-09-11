@@ -10,6 +10,7 @@ This app replaces the Laravel preview with a fullstack Next.js (App Router) proj
 - Prisma ORM
 - Upstash Redis (cron/queues)
 - TypeScript
+- AI via Groq API (Llama 3.1 family)
 
 ## Local development
 
@@ -17,6 +18,7 @@ This app replaces the Laravel preview with a fullstack Next.js (App Router) proj
 cd apps/web
 cp .env.example .env
 # set DATABASE_URL, NEXTAUTH_SECRET, (optional) UPSTASH_REDIS_* and ADMIN_PASSWORD
+# optionally set GROQ_API_KEY to enable AI endpoints
 
 npm install
 npx prisma generate
@@ -33,6 +35,14 @@ Default seed admin:
 - Email: `admin@izamanagement.ro`
 - Password: `ADMIN_PASSWORD` from `.env` (default `admin1234`)
 
+## AI endpoints
+
+- `POST /api/ai-assistant/message`
+  - body: `{ messages: [{role: "user"|"assistant"|"system", content: string}], temperature?, max_tokens?, model? }`
+- `POST /api/ai-assistant/differential-diagnosis`
+  - body: `{ symptoms: string[], age?: number, gender?: string, context?: string }`
+- Set `GROQ_API_KEY` (and optional `GROQ_MODEL`, default `llama-3.1-70b-versatile`)
+
 ## Vercel deployment (free)
 
 - Import the repository in Vercel.
@@ -47,6 +57,7 @@ Default seed admin:
   - (optional) `ADMIN_PASSWORD` → initial admin password
   - (optional) `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` → for cron/queues
   - (optional) `CRON_SECRET` → if you also set it in GitHub Actions (see below)
+  - (optional) `GROQ_API_KEY`, `GROQ_MODEL` → to enable AI
 
 Seed after first deploy (optional, idempotent):
 
