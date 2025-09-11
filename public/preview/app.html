@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>IzaManagement – UI Layout Preview</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.bunny.net">
+  <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
+  <style>
+    :root{
+      --bg:#0b0b0c; --panel:#101113; --muted:#a1a1aa; --text:#e7eaee; --primary:#f97316; --accent:#FF750F;
+      --border:#24262a; --panel-2:#0f1115; --green:#10b981; --red:#ef4444; --yellow:#f59e0b; --blue:#3b82f6;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:'Instrument Sans',ui-sans-serif,system-ui,sans-serif;display:flex;flex-direction:column}
+    .topbar{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#0f0f10,#0b0b0c)}
+    .brand{font-weight:600;letter-spacing:.2px}
+    .pill{border:1px solid #1f2937;background:#0f172a;color:#93c5fd;border-radius:999px;padding:3px 10px;font-size:12px}
+    .spacer{flex:1}
+    .btn{background:#1f2937;border:1px solid #2b3441;color:#cbd5e1;padding:8px 12px;border-radius:8px;font-size:13px;cursor:pointer}
+    .btn:hover{filter:brightness(1.05)}
+    .wrap{display:flex;min-height:0;flex:1}
+    .sidebar{width:220px;border-right:1px solid var(--border);background:var(--panel);padding:14px 10px;display:flex;flex-direction:column;gap:8px}
+    .side-title{color:var(--muted);font-size:12px;margin:4px 8px 8px}
+    .side-link{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:8px;color:#d1d5db;cursor:pointer}
+    .side-link:hover{background:#14161a}
+    .side-link.active{background:#171a1f;border:1px solid #243041}
+    .content{flex:1;display:flex;flex-direction:column;min-width:0}
+    .tabs{display:flex;gap:8px;align-items:center;border-bottom:1px solid var(--border);background:var(--panel);padding:10px 14px;flex-wrap:wrap}
+    .tab{padding:8px 12px;border-radius:8px;cursor:pointer;border:1px solid transparent;color:#dbe2ea}
+    .tab:hover{background:#15171a}
+    .tab.active{background:#1a1f27;border-color:#2a3a4f;box-shadow:inset 0 1px #0e141c}
+    .subtabs{display:flex;gap:6px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--panel-2)}
+    .subtab{font-size:12px;padding:6px 10px;color:#c7cdd4;border-radius:999px;border:1px solid #2b3441;cursor:pointer}
+    .subtab.active{background:#19202b;border-color:#334155}
+    .page{flex:1;min-height:0;overflow:auto;padding:18px}
+    .h{font-weight:600;margin:0 0 8px}
+    .muted{color:var(--muted);font-size:13px}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+    .card{grid-column:span 12;background:linear-gradient(180deg,#0f1216,#0d0f13);border:1px solid #1e2430;border-radius:12px;padding:14px}
+    .stat{display:flex;align-items:center;justify-content:space-between;border:1px solid #1f2937;border-radius:10px;padding:12px;background:#0e1217}
+    .kpi{font-size:22px;font-weight:600}
+    .kmuted{font-size:12px;color:#9aa0a6}
+    .tag{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid #2a3a4f}
+    .tag.green{background:#06291f;color:#7eead3;border-color:#194a3d}
+    .tag.yellow{background:#2a1f06;color:#ffd58a;border-color:#4b3a16}
+    .tag.red{background:#2a0f0e;color:#ffb5ad;border-color:#4b1f1d}
+    .tag.blue{background:#0c1f38;color:#9ec9ff;border-color:#1e3a63}
+    .list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+    .row{display:flex;align-items:center;justify-content:space-between;border:1px solid #1f2834;border-radius:10px;padding:10px;background:#0e1217}
+    .row .l{display:flex;align-items:center;gap:10px}
+    .dot{width:8px;height:8px;border-radius:50%}
+    .dot.green{background:#10b981}.dot.yellow{background:#f59e0b}.dot.red{background:#ef4444}.dot.blue{background:#3b82f6}
+    .toolbar{display:flex;gap:8px;align-items:center;margin:10px 0}
+    .search{flex:1;display:flex;align-items:center;background:#0f172a;border:1px solid #243041;border-radius:8px}
+    .search input{flex:1;background:transparent;border:0;outline:0;color:#e7eaee;padding:8px 10px}
+    .search .ic{padding:0 8px;color:#7ca0d0}
+    .inline-help{font-size:12px;color:var(--muted)}
+    @media (max-width: 960px){
+      .sidebar{display:none}
+      .tabs{position:sticky;top:0;z-index:5}
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">IzaManagement</div>
+    <span class="pill">Preview</span>
+    <div class="spacer"></div>
+    <a href="./index.html" class="btn" title="Welcome page">Welcome</a>
+    <a href="./code.html" class="btn" title="Code viewer">Code</a>
+  </div>
+
+  <div class="wrap">
+    <aside class="sidebar">
+      <div class="side-title">Navigation</div>
+      <div class="side-link active" data-tab="Dashboard">🏠 Dashboard</div>
+      <div class="side-link" data-tab="Courses">📚 Courses</div>
+      <div class="side-link" data-tab="Medical">🧬 Medical Conditions</div>
+      <div class="side-link" data-tab="Protocols">📋 Protocols</div>
+      <div class="side-link" data-tab="AI Lab">🤖 AI Lab</div>
+      <div class="side-link" data-tab="Users">👥 Users</div>
+      <div class="side-link" data-tab="Settings">⚙️ Settings</div>
+      <div style="margin-top:18px" class="inline-help">Select a tab to preview layout and sample content blocks.</div>
+    </aside>
+
+    <section class="content">
+      <div class="tabs" id="tabs">
+        <div class="tab active" data-tab="Dashboard">Dashboard</div>
+        <div class="tab" data-tab="Courses">Courses</div>
+        <div class="tab" data-tab="Medical">Medical</div>
+        <div class="tab" data-tab="Protocols">Protocols</div>
+        <div class="tab" data-tab="AI Lab">AI Lab</div>
+        <div class="tab" data-tab="Users">Users</div>
+        <div class="tab" data-tab="Settings">Settings</div>
+      </div>
+
+      <div class="subtabs" id="subtabs">
+        <!-- Filled dynamically -->
+      </div>
+
+      <div class="page">
+        <div id="content"><!-- dynamic --></div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const subtabConfig = {
+      "Dashboard": ["Overview", "Activity", "Reports"],
+      "Courses": ["Catalog", "Modules", "Tests", "Reviews"],
+      "Medical": ["Conditions", "Reviews", "Translations"],
+      "Protocols": ["All", "Drafts", "Published"],
+      "AI Lab": ["Chat", "Prompts", "History"],
+      "Users": ["Directory", "Roles & Permissions", "Audit log"],
+      "Settings": ["General", "Integrations", "Queues", "Backups"]
+    };
+
+    const exampleRows = (count=5) => {
+      const names = ["Acute Coronary Syndrome", "Sepsis Protocol", "Course: Cardiology 101", "AI Interaction #482", "User: Dr. Popescu"];
+      const tags = ["green","yellow","red","blue"];
+      let html = '<div class="list">';
+      for (let i=0;i<count;i++){
+        const t = tags[i%tags.length];
+        html += `
+          <div class="row">
+            <div class="l">
+              <span class="dot ${t}"></span>
+              <div>
+                <div><strong>${names[i%names.length]}</strong></div>
+                <div class="kmuted">Updated ${2+i}h ago • ID ${(1000+i)}</div>
+              </div>
+            </div>
+            <div>
+              <span class="tag ${t}">${t.toUpperCase()}</span>
+            </div>
+          </div>`;
+      }
+      html += '</div>';
+      return html;
+    };
+
+    function render(tab="Dashboard", sub=undefined){
+      // Tabs active state
+      document.querySelectorAll('.tab').forEach(el=>{
+        el.classList.toggle('active', el.dataset.tab===tab);
+      });
+      document.querySelectorAll('.side-link').forEach(el=>{
+        el.classList.toggle('active', el.dataset.tab===tab);
+      });
+
+      // Subtabs
+      const subtabs = document.getElementById('subtabs');
+      subtabs.innerHTML = '';
+      (subtabConfig[tab]||[]).forEach((name, idx)=>{
+        const el = document.createElement('div');
+        el.className = 'subtab' + (idx===0 ? ' active' : '');
+        el.textContent = name;
+        el.dataset.name = name;
+        el.addEventListener('click', ()=>{
+          subtabs.querySelectorAll('.subtab').forEach(s=>s.classList.remove('active'));
+          el.classList.add('active');
+          renderContent(tab, name);
+        });
+        subtabs.appendChild(el);
+      });
+
+      // Content
+      renderContent(tab, (sub || (subtabConfig[tab]||[])[0]));
+    }
+
+    function renderContent(tab, sub){
+      const c = document.getElementById('content');
+      const tool = `
+        <div class="toolbar">
+          <div class="search">
+            <div class="ic">🔎</div>
+            <input placeholder="Search ${tab.toLowerCase()}..." />
+          </div>
+          <button class="btn">+ New</button>
+        </div>`;
+
+      if (tab==="Dashboard"){
+        c.innerHTML = `
+          <h2 class="h">Dashboard overview</h2>
+          <div class="muted">High-level KPIs for the last 24 hours.</div>
+          <div class="grid" style="margin-top:14px">
+            <div class="card" style="grid-column: span 4;">
+              <div class="stat"><div>New users</div><div class="kpi">28</div></div>
+            </div>
+            <div class="card" style="grid-column: span 4;">
+              <div class="stat"><div>AI interactions</div><div class="kpi">412</div></div>
+            </div>
+            <div class="card" style="grid-column: span 4;">
+              <div class="stat"><div>Completions</div><div class="kpi">76</div></div>
+            </div>
+            <div class="card" style="grid-column: span 12;">
+              <h3 class="h">Recent activity</h3>
+              ${exampleRows(6)}
+            </div>
+          </div>`;
+        return;
+      }
+
+      if (tab==="Courses"){
+        c.innerHTML = `
+          <h2 class="h">Courses</h2>
+          <div class="muted">Manage catalog, modules, tests and reviews.</div>
+          ${tool}
+          <div class="grid">
+            <div class="card" style="grid-column: span 8;">
+              <h3 class="h">Catalog</h3>
+              ${exampleRows(5)}
+            </div>
+            <div class="card" style="grid-column: span 4;">
+              <h3 class="h">Filters</h3>
+              <div class="list">
+                <div class="row"><div class="l"><div>Category</div></div><div class="tag blue">Cardiology</div></div>
+                <div class="row"><div class="l"><div>Status</div></div><div class="tag green">Published</div></div>
+                <div class="row"><div class="l"><div>Level</div></div><div class="tag yellow">Intermediate</div></div>
+              </div>
+            </div>
+          </div>`;
+        return;
+      }
+
+      if (tab==="Medical"){
+        c.innerHTML = `
+          <h2 class="h">Medical Conditions</h2>
+          <div class="muted">Browse and curate medical knowledge base.</div>
+          ${tool}
+          ${exampleRows(7)}`;
+        return;
+      }
+
+      if (tab==="Protocols"){
+        c.innerHTML = `
+          <h2 class="h">Treatment Protocols</h2>
+          <div class="muted">Draft, review and publish protocols.</div>
+          ${tool}
+          ${exampleRows(6)}`;
+        return;
+      }
+
+      if (tab==="AI Lab"){
+        c.innerHTML = `
+          <h2 class="h">AI Lab</h2>
+          <div class="muted">Experiment with prompts and analyze interactions.</div>
+          ${tool}
+          <div class="card"><div class="h">Chat prototype</div><div class="muted">This is a static preview only.</div></div>
+          <div style="height:8px"></div>
+          ${exampleRows(4)}`;
+        return;
+      }
+
+      if (tab==="Users"){
+        c.innerHTML = `
+          <h2 class="h">Users</h2>
+          <div class="muted">Directory, roles & permissions, and audit trail.</div>
+          ${tool}
+          ${exampleRows(8)}`;
+        return;
+      }
+
+      if (tab==="Settings"){
+        c.innerHTML = `
+          <h2 class="h">Settings</h2>
+          <div class="muted">Configure application-wide options.</div>
+          <div class="grid" style="margin-top:14px">
+            <div class="card" style="grid-column: span 6;">
+              <div class="h">General</div>
+              <div class="muted">App name, timezone, locale</div>
+            </div>
+            <div class="card" style="grid-column: span 6;">
+              <div class="h">Integrations</div>
+              <div class="muted">Ollama, Groq, Mail</div>
+            </div>
+            <div class="card" style="grid-column: span 6;">
+              <div class="h">Queues</div>
+              <div class="muted">Workers, retries</div>
+            </div>
+            <div class="card" style="grid-column: span 6;">
+              <div class="h">Backups</div>
+              <div class="muted">Retention, schedules</div>
+            </div>
+          </div>`;
+        return;
+      }
+
+      c.innerHTML = `<div class="muted">Select a tab</div>`;
+    }
+
+    // Event bindings
+    document.querySelectorAll('.tab').forEach(el=>{
+      el.addEventListener('click', ()=> render(el.dataset.tab));
+    });
+    document.querySelectorAll('.side-link').forEach(el=>{
+      el.addEventListener('click', ()=> render(el.dataset.tab));
+    });
+
+    // Initial render
+    render("Dashboard");
+  </script>
+</body>
+</html>
