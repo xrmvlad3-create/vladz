@@ -12,6 +12,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <h1 style={{ fontSize: 20, fontWeight: 600 }}>IzaManagement</h1>
             <nav style={{ display: "flex", gap: 12 }}>
               <a href="/" style={{ color: "#2563eb" }}>Dashboard</a>
+              <a href="/ai" style={{ color: "#2563eb" }}>AI</a>
+              <a href="/preview" style={{ color: "#2563eb" }}>Preview</a>
               <a href="/api/health" style={{ color: "#2563eb" }}>Health</a>
             </nav>
           </header>

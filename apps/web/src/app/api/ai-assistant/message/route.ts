@@ -1,7 +1,18 @@
 import { chat, type AIMessage } from "@lib/groq";
+import { rateLimit, clientIpFromHeaders } from "@lib/rate-limit";
 
 export async function POST(req: Request) {
   try {
+    // Basic rate limit: 30 requests / 5 minutes per IP (if Upstash configured)
+    const ip = clientIpFromHeaders(req.headers);
+    const rl = await rateLimit({ key: `ai:msg:${ip}`, limit: 30, windowSeconds: 300 });
+    if (!rl.allowed) {
+      return new Response("Rate limit exceeded. Try again later.", {
+        status: 429,
+        headers: { "Retry-After": String(Math.max(1, rl.reset - Math.floor(Date.now() / 1000))) }
+      });
+    }
+
     const body = await req.json().catch(() => ({}));
     const { messages, temperature, max_tokens, model } = body ?? {};
 
