@@ -3,12 +3,10 @@ FROM php:8.2-fpm-alpine
 # Set working directory
 WORKDIR /var/www/html
 
-# Install system dependencies
+# Runtime packages and headers needed for PHP extensions and build
 RUN apk add --no-cache \
     git \
     curl \
-    libpng-dev \
-    libxml2-dev \
     zip \
     unzip \
     postgresql-dev \
@@ -16,27 +14,38 @@ RUN apk add --no-cache \
     nodejs \
     npm \
     supervisor \
-    nginx
+    nginx \
+    # headers for gd/intl/zip
+    libpng-dev \
+    libjpeg-turbo-dev \
+    freetype-dev \
+    icu-dev \
+    libzip-dev \
+    zlib-dev \
+    libxml2-dev
 
-# Install PHP extensions
-RUN docker-php-ext-install \
-    pdo \
-    pdo_pgsql \
-    mbstring \
-    exif \
-    pcntl \
-    bcmath \
-    gd \
-    xml \
-    soap \
-    intl \
-    zip
+# Build PHP core extensions (ensure build deps present) and configure GD before compile
+RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS build-base \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) \
+        pdo \
+        pdo_pgsql \
+        mbstring \
+        exif \
+        pcntl \
+        bcmath \
+        gd \
+        xml \
+        soap \
+        intl \
+        zip \
+    && apk del .build-deps
 
-# Install Redis extension
-RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
+# Install Redis extension via PECL (separate build deps scope)
+RUN apk add --no-cache --virtual .pecl-build $PHPIZE_DEPS \
     && pecl install redis \
     && docker-php-ext-enable redis \
-    && apk del .build-deps
+    && apk del .pecl-build
 
 # Get latest Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -47,7 +56,6 @@ RUN addgroup -g 1000 www && \
 
 # Copy existing application directory contents
 COPY . /var/www/html
-
 # Copy existing application directory permissions
 COPY --chown=www:www . /var/www/html
 

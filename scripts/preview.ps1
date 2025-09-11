@@ -8,20 +8,36 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-# Choose compose command (new vs legacy)
-$composeBase = "docker compose"
-try { & docker compose version | Out-Null } catch { $composeBase = "docker-compose" }
-$compose = "$composeBase -f docker-compose.preview.yml"
+# Robust detection of Docker Compose CLI (v2 plugin vs legacy docker-compose)
+$composeExe = "docker"
+$composeSub = @("compose")
+$composeFile = @("-f", "docker-compose.preview.yml")
+
+$composeV2Ok = $true
+try { & $composeExe @composeSub "version" | Out-Null } catch { $composeV2Ok = $false }
+if (-not $composeV2Ok -or $LASTEXITCODE -ne 0) {
+    if (Get-Command "docker-compose" -ErrorAction SilentlyContinue) {
+        $composeExe = "docker-compose"
+        $composeSub = @()
+    } else {
+        Write-Host "ERROR: Neither 'docker compose' nor 'docker-compose' is available. Install Docker Desktop (with Compose v2) or docker-compose." -ForegroundColor Red
+        exit 1
+    }
+}
+
+function dc {
+    param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Args)
+    & $composeExe @composeSub @composeFile @Args
+}
 
 Write-Host "[preview] Building and starting containers..." -ForegroundColor Cyan
-& $composeBase -v | Out-Null
-& $compose up -d --build
+dc up -d --build
 
 Write-Host "[preview] Waiting for Postgres readiness..." -ForegroundColor Cyan
 $postgresReady = $false
 for ($i = 1; $i -le 30; $i++) {
     try {
-        & $compose exec -T postgres pg_isready -U izauser -d izamanagement | Out-Null
+        dc exec -T postgres pg_isready -U izauser -d izamanagement | Out-Null
         $postgresReady = $true
         break
     } catch {
@@ -36,7 +52,7 @@ if ($postgresReady) {
 
 function Run-Artisan($args) {
     try {
-        & $compose exec -T app php artisan $args
+        dc exec -T app php artisan $args
     } catch {
         Write-Host "[preview] artisan $args (non-fatal error, continuing)" -ForegroundColor Yellow
     }
@@ -56,4 +72,4 @@ Write-Host "Preview is up:" -ForegroundColor Green
 Write-Host "  App URL:  http://localhost:8080"
 Write-Host "  Health:   curl http://localhost:8080/health"
 Write-Host ""
-& $compose ps
+dc ps
