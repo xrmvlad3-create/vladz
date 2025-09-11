@@ -11,7 +11,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <header style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
             <h1 style={{ fontSize: 20, fontWeight: 600 }}>IzaManagement</h1>
             <nav style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <a href="/" style={{ color: "#2563eb" }}>Dashboard</a>
+              <a href="/" style={{ color: "#2563eb" }}>Home</a>
+              <a href="/dashboard" style={{ color: "#2563eb" }}>Dashboard</a>
               <a href="/conditions" style={{ color: "#2563eb" }}>Afecțiuni</a>
               <a href="/procedures" style={{ color: "#2563eb" }}>Proceduri</a>
               <a href="/courses" style={{ color: "#2563eb" }}>Cursuri</a>

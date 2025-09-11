@@ -98,7 +98,7 @@ async function main() {
     console.log(`Done. Imported/updated ${count} conditions under specialty: ${specialtySlug}`);
   } finally {
     await new Promise((r) => setTimeout(r, 50));
-    await (globalThis as any).prisma?.$disconnect?.().catch(() => {});
+    await prisma.$disconnect().catch(() => {});
     process.exit(0);
   }
 }
