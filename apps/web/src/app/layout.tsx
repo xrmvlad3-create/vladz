@@ -7,11 +7,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ro">
       <body style={{ fontFamily: "Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial" }}>
-        <div style={{ maxWidth: 960, margin: "0 auto", padding: "24px" }}>
-          <header style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ maxWidth: 1120, margin: "0 auto", padding: "24px" }}>
+          <header style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
             <h1 style={{ fontSize: 20, fontWeight: 600 }}>IzaManagement</h1>
-            <nav style={{ display: "flex", gap: 12 }}>
+            <nav style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               <a href="/" style={{ color: "#2563eb" }}>Dashboard</a>
+              <a href="/conditions" style={{ color: "#2563eb" }}>Afecțiuni</a>
+              <a href="/procedures" style={{ color: "#2563eb" }}>Proceduri</a>
+              <a href="/courses" style={{ color: "#2563eb" }}>Cursuri</a>
+              <a href="/ai" style={{ color: "#2563eb" }}>AI</a>
+              <a href="/preview" style={{ color: "#2563eb" }}>Preview</a>
               <a href="/api/health" style={{ color: "#2563eb" }}>Health</a>
             </nav>
           </header>

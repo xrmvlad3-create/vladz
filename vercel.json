@@ -1,17 +1,11 @@
 {
   "version": 2,
-  "name": "izamanagement-preview",
+  "name": "izamanagement",
   "public": true,
   "builds": [
-    { "src": "public/preview/**", "use": "@vercel/static" }
+    { "src": "apps/web/next.config.mjs", "use": "@vercel/next" }
   ],
-  "routes": [
-    { "src": "/$", "dest": "public/preview/index.html" },
-    { "src": "/health", "dest": "public/preview/health.txt" },
-    { "src": "/app$", "dest": "public/preview/app.html" },
-    { "src": "/code$", "dest": "public/preview/code.html" },
-    { "src": "/preview$", "dest": "public/preview/index.html" },
-    { "src": "/preview/(.*)", "dest": "public/preview/$1" },
-    { "src": "/(.*)", "dest": "public/preview/$1" }
-  ]
+  "env": {
+    "NEXT_TELEMETRY_DISABLED": "1"
+  }
 }

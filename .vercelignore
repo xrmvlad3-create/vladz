@@ -1,0 +1,17 @@
+# Ignore legacy Laravel and infra from deployments
+app/
+bootstrap/
+config/
+database/
+docker/
+public/
+resources/
+routes/
+storage/
+artisan
+composer.json
+package.json
+Dockerfile
+docker-compose.yml
+docker-compose.preview.yml
+vite.config.js
