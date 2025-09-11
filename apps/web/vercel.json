@@ -1,8 +1,0 @@
-{
-  "crons": [
-    {
-      "path": "/api/cron/every-15m",
-      "schedule": "*/15 * * * *"
-    }
-  ]
-}
