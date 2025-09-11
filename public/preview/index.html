@@ -1,29 +1,32 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ro">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>IzaManagement – Preview</title>
-  <meta name="description" content="IzaManagement – Medical AI platform (Preview)">
+  <title>IzaManagement – Previzualizare</title>
+  <meta name="description" content="IzaManagement – Platformă Medicală AI (Previzualizare)">
   <link rel="preconnect" href="https://fonts.bunny.net">
   <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
   <style>
-    /*! Minimal inline Tailwind-like styles extracted from the Laravel welcome for a static preview */
     :root{--font-sans:'Instrument Sans',ui-sans-serif,system-ui,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";}
     html{line-height:1.5;font-family:var(--font-sans);}
-    body{margin:0;background:#FDFDFC;color:#1b1b18}
+    body{margin:0;background:#F7F8FA;color:#111827}
     a{color:inherit;text-decoration:none}
     .container{display:flex;min-height:100vh;padding:24px;justify-content:center;align-items:center}
     .wrap{display:flex;gap:16px;max-width:1024px;width:100%}
-    .panel{flex:1;background:#fff;border-radius:.5rem;box-shadow:inset 0 0 0 1px rgba(26,26,0,.16)}
-    .panel-inner{padding:24px 24px 48px}
-    .title{margin:0 0 4px;font-weight:600}
-    .muted{margin:0 0 8px;color:#706f6c}
+    .panel{flex:1;background:#fff;border-radius:.75rem;border:1px solid #E5E7EB}
+    .panel-inner{padding:28px 28px 48px}
+    .title{margin:0 0 6px;font-weight:600;font-size:22px}
+    .muted{margin:0 0 12px;color:#6B7280}
     .list{margin:0;padding:0;list-style:none}
-    .list li{display:flex;gap:16px;padding:8px 0;align-items:center}
-    .cta{display:inline-block;padding:.375rem 1.25rem;border-radius:.25rem;background:#1b1b18;border:1px solid #000;color:#fff}
-    .art{background:#fff2f2;position:relative;border-radius:.5rem;overflow:hidden;width:438px;min-height:280px}
-    .footer{margin-top:12px;text-align:center;color:#706f6c;font-size:.875rem}
+    .list li{display:flex;gap:10px;padding:8px 0;align-items:center}
+    .cta{display:inline-block;padding:.5rem 1.25rem;border-radius:.5rem;background:#111827;border:1px solid #000;color:#fff}
+    .cta:hover{filter:brightness(1.05)}
+    .art{background:#FFF1F2;position:relative;border-radius:.75rem;overflow:hidden;width:438px;min-height:280px;border:1px solid #FECACA}
+    .footer{margin-top:12px;text-align:center;color:#6B7280;font-size:.9rem}
+    .links{display:flex;gap:10px;margin-top:12px}
+    .link-btn{display:inline-block;padding:.5rem .9rem;border-radius:.5rem;border:1px solid #E5E7EB;background:#fff;color:#111827}
+    .link-btn:hover{border-color:#D1D5DB}
     @media (max-width: 1024px){
       .wrap{flex-direction:column}
       .art{width:100%}
@@ -35,26 +38,27 @@
     <main class="wrap">
       <section class="panel">
         <div class="panel-inner">
-          <h1 class="title">IzaManagement – Preview</h1>
-          <p class="muted">This is a static preview of your Laravel app’s welcome screen. Backend (PHP/Laravel) isn’t running in this preview, but assets and layout are showcased.</p>
+          <h1 class="title">IzaManagement – Previzualizare statică</h1>
+          <p class="muted">Aceasta este o previzualizare statică a ecranului de întâmpinare. Backend-ul (PHP/Laravel) nu rulează aici, însă structura și stilul sunt vizibile.</p>
           <ul class="list">
             <li>
               <span>•</span>
-              <span>Read the <a href="https://laravel.com/docs" target="_blank" style="text-decoration:underline;color:#f53003;margin-left:4px">Laravel Documentation</a></span>
+              <span>Citește <a href="https://laravel.com/docs" target="_blank" style="text-decoration:underline;color:#ef4444;margin-left:4px">Documentația Laravel</a></span>
             </li>
             <li>
               <span>•</span>
-              <span>Watch <a href="https://laracasts.com" target="_blank" style="text-decoration:underline;color:#f53003;margin-left:4px">Laracasts</a></span>
+              <span>Urmărește <a href="https://laracasts.com" target="_blank" style="text-decoration:underline;color:#ef4444;margin-left:4px">Laracasts</a></span>
             </li>
           </ul>
-          <p>
-            <a class="cta" href="https://cloud.laravel.com" target="_blank">Deploy now</a>
-          </p>
+          <div class="links">
+            <a class="link-btn" href="./app.html">Previzualizare UI (Română)</a>
+            <a class="link-btn" href="./code.html">Vizualizare cod</a>
+            <a class="cta" href="https://cloud.laravel.com" target="_blank">Deploy acum</a>
+          </div>
         </div>
       </section>
       <aside class="art" aria-hidden="true">
-        <!-- Simple decorative mark -->
-        <svg viewBox="0 0 438 104" width="100%" height="104" style="position:absolute;top:24px;left:0;color:#F53003" xmlns="http://www.w3.org/2000/svg">
+        <svg viewBox="0 0 438 104" width="100%" height="104" style="position:absolute;top:24px;left:0;color:#F43F5E" xmlns="http://www.w3.org/2000/svg">
           <path d="M17.2036 -3H0V102.197H49.5189V86.7187H17.2036V-3Z" fill="currentColor" />
           <path d="M438 -3H421.694V102.197H438V-3Z" fill="currentColor" />
           <path d="M139.43 102.197H155.735V48.2834H183.712V32.1665H139.43V102.197Z" fill="currentColor" />
@@ -63,6 +67,6 @@
       </aside>
     </main>
   </div>
-  <div class="footer">Backend preview available once Docker/Nginx/PHP are running.</div>
+  <div class="footer">Previzualizarea backend-ului este disponibilă după pornirea Docker/Nginx/PHP.</div>
 </body>
 </html>
