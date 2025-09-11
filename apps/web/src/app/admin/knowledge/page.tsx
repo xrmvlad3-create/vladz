@@ -3,6 +3,7 @@ import { authOptions } from "@lib/auth";
 import { prisma } from "@lib/prisma";
 import { revalidatePath } from "next/cache";
 import { DocStatus, Language, Visibility } from "@prisma/client";
+import TranslateClient from "./TranslateClient";
 
 async function upsertConditionText(formData: FormData) {
   "use server";
@@ -148,6 +149,11 @@ export default async function KnowledgeAdminPage({ searchParams }: { searchParam
   return (
     <main>
       <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 12 }}>Conținut medical (RO/EN)</h2>
+
+      <section style={{ border: "1px solid #e5e7eb", borderRadius: 10, padding: 12, background: "#fff", marginBottom: 12 }}>
+        <h3 style={{ fontWeight: 600, marginBottom: 8 }}>Traducere și comparație (RO/EN)</h3>
+        <TranslateClient />
+      </section>
 
       <section style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0,1fr))", gap: 12 }}>
         <div style={{ border: "1px solid #e5e7eb", borderRadius: 10, padding: 12, background: "#fff" }}>
