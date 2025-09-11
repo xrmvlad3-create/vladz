@@ -7,15 +7,21 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/// Users (NextAuth + app model)
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
   name      String?
   role      String   @default("user")
+  password  String?  // bcrypt hash for Credentials provider
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  accounts  Account[]
+  sessions  Session[]
 }
 
+/// Specialty taxonomy
 model Specialty {
   id        String      @id @default(uuid())
   slug      String      @unique
@@ -28,6 +34,7 @@ model Specialty {
   courses    Course[]
 }
 
+/// Medical conditions
 model Condition {
   id           String     @id @default(uuid())
   slug         String     @unique
@@ -40,6 +47,7 @@ model Condition {
   specialtyId String
 }
 
+/// Procedures
 model Procedure {
   id           String     @id @default(uuid())
   slug         String     @unique
@@ -51,6 +59,7 @@ model Procedure {
   specialtyId String
 }
 
+/// Courses metadata (links to official providers)
 model Course {
   id           String     @id @default(uuid())
   title        String
@@ -62,4 +71,41 @@ model Course {
 
   specialty   Specialty  @relation(fields: [specialtyId], references: [id])
   specialtyId String
+}
+
+/// NextAuth tables (for OAuth or future providers)
+model Account {
+  id                String  @id @default(uuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
 }

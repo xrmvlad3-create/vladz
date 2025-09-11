@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -56,6 +57,18 @@ async function main() {
       url: "https://eadv.org/learn",
       specialtyId: derm.id
     }
+  });
+
+  // Admin user
+  const adminEmail = "admin@izamanagement.ro";
+  const adminName = "Administrator";
+  const plain = process.env.ADMIN_PASSWORD || "admin1234";
+  const hash = await bcrypt.hash(plain, 10);
+
+  await prisma.user.upsert({
+    where: { email: adminEmail },
+    update: { role: "admin", name: adminName, password: hash },
+    create: { email: adminEmail, role: "admin", name: adminName, password: hash }
   });
 }
 
