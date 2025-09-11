@@ -50,6 +50,8 @@
     .list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
     .row{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--border);border-radius:12px;padding:10px;background:#FFF}
     .row .l{display:flex;align-items:center;gap:10px}
+    .row.proc-item{cursor:pointer}
+    .row.proc-item:hover{background:#F9FAFB;border-color:#E5E7EB}
     .dot{width:8px;height:8px;border-radius:50%}
     .dot.green{background:#10b981}.dot.yellow{background:#f59e0b}.dot.red{background:#ef4444}.dot.blue{background:#3b82f6}
     .toolbar{display:flex;gap:8px;align-items:center;margin:10px 0}
@@ -532,9 +534,27 @@
         const recent = getRecentProcedures(currentSpecialty);
         const mergedCatalog = [...new Set([...(recent||[]), ...allList])];
 
-        const chipsAll = procedureChips(mergedCatalog);
-        const chipsCommon = procedureChips(getCommonProcedures(currentSpecialty));
-        const chipsRecent = recent && recent.length ? procedureChips(recent) : '<div class="muted">Încă nu există proceduri recente. Alege din Catalog.</div>';
+        const renderProcList = (arr) => {
+          if (!arr || !arr.length) return '<div class="muted">Nicio procedură.</div>';
+          const recSet = new Set(recent||[]);
+          let html = '<div class="list">';
+          arr.forEach(name => {
+            const badge = recSet.has(name) ? '<span class="tag yellow">RECENT</span>' : '';
+            html += `
+              <div class="row proc-item" data-proc="${name}">
+                <div class="l">
+                  <span class="dot blue"></span>
+                  <div>
+                    <div><strong>${name}</strong></div>
+                    <div class="kmuted">Procedură ${currentSpecialty.toLowerCase()}</div>
+                  </div>
+                </div>
+                <div>${badge}</div>
+              </div>`;
+          });
+          html += '</div>';
+          return html;
+        };
 
         let tutorial = '';
         if (sub === "Tutorial detaliat") {
@@ -549,29 +569,32 @@
           ${sub==="Recente" ? `
             <div class="card">
               <div class="h">Recente (${currentSpecialty})</div>
-              ${chipsRecent}
+              ${recent && recent.length ? renderProcList(recent) : '<div class="muted">Încă nu există proceduri recente. Alege din Catalog.</div>'}
             </div>
           ` : ''}
           ${sub==="Comune" ? `
             <div class="card">
               <div class="h">Comune (${currentSpecialty})</div>
-              ${chipsCommon}
+              ${renderProcList(getCommonProcedures(currentSpecialty))}
             </div>
           ` : ''}
           ${sub==="Catalog" ? `
             <div class="card">
               <div class="h">Catalog proceduri (${currentSpecialty})</div>
-              ${chipsAll}
+              ${renderProcList(mergedCatalog)}
               <div style="height:10px"></div>
               <div class="muted">Selectează o procedură pentru a vedea detalii.</div>
             </div>
           ` : ''}
           ${sub==="Tutorial detaliat" ? `
-            <div class="card">
-              <div class="h">Selectează procedura</div>
-              ${chipsAll}
-              <div style="height:10px"></div>
-              ${tutorial}
+            <div class="grid">
+              <div class="card" style="grid-column: span 4;">
+                <div class="h">Proceduri (${currentSpecialty})</div>
+                ${renderProcList(mergedCatalog)}
+              </div>
+              <div class="card" style="grid-column: span 8;">
+                ${tutorial}
+              </div>
             </div>
           ` : ''}
           ${sub==="Consumabile" ? `
@@ -592,13 +615,25 @@
             </div>
           ` : ''}`;
 
-        // bind procedure chips
-        document.querySelectorAll('.chip[data-proc]').forEach(el=>{
+        // bind procedure rows (like in Arhivă/Cursuri)
+        document.querySelectorAll('.proc-item').forEach(el=>{
           el.addEventListener('click', ()=>{
             currentProcedure = el.getAttribute('data-proc');
             saveRecentProcedure(currentSpecialty, currentProcedure);
-            render('Proceduri', sub === 'Recente' ? 'Tutorial detaliat' : sub);
+            render('Proceduri', 'Tutorial detaliat');
           });
+        });
+
+        // bind PRP zone chips if present
+        document.querySelectorAll('.chip-zone').forEach(el=>{
+          el.addEventListener('click', ()=>{
+            currentPRPZone = el.getAttribute('data-zone');
+            render('Proceduri', 'Tutorial detaliat');
+          });
+        });
+
+        return;
+      });
         });
 
         // bind PRP zone chips if present
