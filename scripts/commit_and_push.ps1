@@ -1,6 +1,12 @@
 Param(
   [Parameter(Mandatory = $false)]
-  [string]$Message = "feat(preview/procedures): UI updates — Procedures (Recente/Comune/Catalog/Tutorial), PRP zones (Scalp/Față) with injection map, recency ordering, Romanian UI"
+  [string]$Message = "feat(preview/procedures): UI updates — Procedures (Recente/Comune/Catalog/Tutorial), PRP zones (Scalp/Față) with injection map, recency ordering, Romanian UI",
+  [Parameter(Mandatory = $false)]
+  [string]$Repo,   # owner/repo (e.g. user/project). If provided with -Token, uses ephemeral push.
+  [Parameter(Mandatory = $false)]
+  [string]$Token,  # GitHub token for one-off push. Avoids storing in git config.
+  [Parameter(Mandatory = $false)]
+  [string]$Branch  # Default current branch; set to push to a specific remote branch
 )
 
 function Write-Info($msg) { Write-Host $msg -ForegroundColor Cyan }
@@ -20,8 +26,10 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # Branch
-$branch = git rev-parse --abbrev-ref HEAD 2>$null
-if (-not $branch) { $branch = "main" }
+if (-not $Branch -or $Branch -eq "") {
+  $Branch = git rev-parse --abbrev-ref HEAD 2>$null
+  if (-not $Branch) { $Branch = "main" }
+}
 
 # Warn if identity missing
 $name = git config user.name 2>$null
@@ -32,32 +40,36 @@ if (-not $name -or -not $email) {
   Write-Host '  git config user.email "you@example.com"'
 }
 
-# Remote check
-$remoteUrl = git remote get-url origin 2>$null
-if ($LASTEXITCODE -ne 0) {
-  Write-Err "No 'origin' remote configured."
-  Write-Host "Add it, then rerun this script:"
-  Write-Host "  git remote add origin https://github.com/<org>/<repo>.git"
-  Write-Host "  git fetch origin"
-  Write-Host "  git branch -u origin/$branch"
-  exit 1
-}
-
-# Stage, commit, push
+# Stage, commit
 git add -A | Out-Null
 
 # Any staged changes?
 $staged = git diff --cached --name-only
 if (-not $staged) {
   Write-Info "Nothing to commit (working tree clean)."
-  git push -u origin $branch
+} else {
+  git commit -m $Message
+  if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+}
+
+# Push - prefer ephemeral HTTPS with token if provided
+if ($Token -and $Repo) {
+  $url = "https://$Token@github.com/$Repo.git"
+  git push -u $url "HEAD:refs/heads/$Branch"
+  if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+  Write-Info "Done: pushed '$Branch' to $Repo with ephemeral token URL."
   exit 0
 }
 
-git commit -m $Message
+# Fallback: origin remote
+$remoteUrl = git remote get-url origin 2>$null
+if ($LASTEXITCODE -ne 0) {
+  Write-Err "No 'origin' remote configured and no Token/Repo provided."
+  Write-Host "Either set origin or run with: -Repo 'owner/repo' -Token '***' [-Branch 'feat/xyz']"
+  exit 1
+}
+
+git push -u origin $Branch
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-git push -u origin $branch
-if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-Write-Info "Done: pushed '$branch' to origin."
+Write-Info "Done: pushed '$Branch' to origin."
