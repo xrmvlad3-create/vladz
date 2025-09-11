@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  role      String   @default("user")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Specialty {
+  id        String      @id @default(uuid())
+  slug      String      @unique
+  name      String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  conditions Condition[]
+  procedures Procedure[]
+  courses    Course[]
+}
+
+model Condition {
+  id           String     @id @default(uuid())
+  slug         String     @unique
+  name         String
+  isCommon     Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  specialty   Specialty  @relation(fields: [specialtyId], references: [id])
+  specialtyId String
+}
+
+model Procedure {
+  id           String     @id @default(uuid())
+  slug         String     @unique
+  name         String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  specialty   Specialty  @relation(fields: [specialtyId], references: [id])
+  specialtyId String
+}
+
+model Course {
+  id           String     @id @default(uuid())
+  title        String
+  provider     String
+  url          String
+  language     String?    @default("ro")
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  specialty   Specialty  @relation(fields: [specialtyId], references: [id])
+  specialtyId String
+}
