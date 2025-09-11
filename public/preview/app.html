@@ -59,6 +59,9 @@
     .inline-help{font-size:12px;color:var(--muted)}
     .specialty{display:flex;align-items:center;gap:8px}
     .select{border:1px solid var(--border);background:#fff;border-radius:8px;padding:6px 10px;color:#111827}
+    .choice{display:inline-flex;gap:8px;flex-wrap:wrap}
+    .chip{display:inline-block;padding:6px 10px;border:1px solid #E5E7EB;border-radius:999px;background:#FFF;cursor:pointer}
+    .chip.active{border-color:#FED7AA;background:#FFF7ED;color:#7C2D12}
     @media (max-width: 960px){
       .sidebar{display:none}
       .tabs{position:sticky;top:0;z-index:5}
@@ -87,24 +90,26 @@
     <aside class="sidebar">
       <div class="side-title">Navigație</div>
       <div class="side-link active" data-tab="Dashboard">🏠 Dashboard</div>
-      <div class="side-link" data-tab="Arhiva Afectiuni">🗂️ Arhiva Afectiuni</div>
+      <div class="side-link" data-tab="Arhivă afecțiuni">🗂️ Arhivă afecțiuni</div>
       <div class="side-link" data-tab="Cursuri">📚 Cursuri</div>
+      <div class="side-link" data-tab="Proceduri">🛠️ Proceduri</div>
       <div class="side-link" data-tab="Protocoale">📋 Protocoale</div>
       <div class="side-link" data-tab="AI Lab">🤖 AI Lab</div>
       <div class="side-link" data-tab="Utilizator">👤 Utilizator</div>
-      <div class="side-link" data-tab="Setari">⚙️ Setari</div>
+      <div class="side-link" data-tab="Setări">⚙️ Setări</div>
       <div style="margin-top:18px" class="inline-help">Alege un tab pentru a vedea o previzualizare a paginii. Ordinea este optimizată pentru flux clinic.</div>
     </aside>
 
     <section class="content">
       <div class="tabs" id="tabs">
         <div class="tab active" data-tab="Dashboard">Dashboard</div>
-        <div class="tab" data-tab="Arhiva Afectiuni">Arhiva Afectiuni</div>
+        <div class="tab" data-tab="Arhivă afecțiuni">Arhivă afecțiuni</div>
         <div class="tab" data-tab="Cursuri">Cursuri</div>
+        <div class="tab" data-tab="Proceduri">Proceduri</div>
         <div class="tab" data-tab="Protocoale">Protocoale</div>
         <div class="tab" data-tab="AI Lab">AI Lab</div>
         <div class="tab" data-tab="Utilizator">Utilizator</div>
-        <div class="tab" data-tab="Setari">Setari</div>
+        <div class="tab" data-tab="Setări">Setări</div>
       </div>
 
       <div class="subtabs" id="subtabs">
@@ -119,15 +124,17 @@
 
   <script>
     let currentSpecialty = 'Dermatologie';
+    let currentProcedure = 'PRP (plasmă bogată în trombocite)';
 
     const subtabConfig = {
       "Dashboard": ["Prezentare", "Activitate", "Rapoarte"],
-      "Arhiva Afectiuni": ["Comune", "Toate", "Căutare"],
+      "Arhivă afecțiuni": ["Comune", "Toate", "Căutare"],
       "Cursuri": ["Catalog", "Module", "Teste", "Recenzii"],
+      "Proceduri": ["Catalog", "Tutorial detaliat", "Consumabile", "Siguranță"],
       "Protocoale": ["Toate", "Ciornă", "Publicate"],
       "AI Lab": ["Chat", "Prompturi", "Istoric"],
       "Utilizator": ["Profil", "Securitate", "Preferințe"],
-      "Setari": ["Generale", "Integrări", "Cozi", "Copii de siguranță"]
+      "Setări": ["Generale", "Integrări", "Cozi", "Copii de siguranță"]
     };
 
     const specialtyCommon = {
@@ -168,6 +175,34 @@
         ["Scarlatină","INFEC"],
         ["Bronșiolită","PULM"],
         ["Otită medie acută","ORL"]
+      ]
+    };
+
+    const specialtyProcedures = {
+      "Dermatologie": [
+        "PRP (plasmă bogată în trombocite)",
+        "Biopsie cutanată",
+        "Crioterapie leziuni cutanate",
+        "Electrocauterizare",
+        "Excizie leziune cutanată",
+        "Laser CO₂ (ablatv) – leziuni/remeiere",
+        "Peeling chimic (AHA/BHA/TCA)",
+        "Infiltrații intralezionale (triamcinolon)",
+        "Dermatoscopie documentată"
+      ],
+      "Cardiologie": [
+        "ECG 12 derivații – interpretare",
+        "Ecocardiografie POCUS",
+        "Test de efort – protocol Bruce"
+      ],
+      "Medicină internă": [
+        "Puncție venoasă periferică",
+        "Administrare perfuzie",
+        "Puncție pleurală (orientare)"
+      ],
+      "Pediatrie": [
+        "Nebulizare bronhodilatatoare",
+        "Montare branulă pediatrică"
       ]
     };
 
@@ -221,6 +256,94 @@
       html += '</div>';
       return html;
     };
+
+    function procedureChips(list) {
+      let html = '<div class="choice">';
+      list.forEach(name => {
+        const active = (name === currentProcedure) ? ' active' : '';
+        html += `<span class="chip${active}" data-proc="${name}">${name}</span>`;
+      });
+      html += '</div>';
+      return html;
+    }
+
+    function tutorialPRP(){
+      return `
+      <div class="card">
+        <div class="h">PRP – Plasmă bogată în trombocite (dermatologie)</div>
+        <div class="muted">Indicații: alopecie androgenică/difuză, cicatrici postacneice (adesea combinat cu microneedling), rejuvenare cutanată selectivă.</div>
+        <div style="height:10px"></div>
+        <div class="grid">
+          <div class="card" style="grid-column: span 6;">
+            <div class="h">1) Criterii/contraindicații</div>
+            <ul class="list">
+              <li class="row"><div class="l"><div>Indicații</div></div><div class="kmuted">alopecie, cicatrici atrofice, întinerire</div></li>
+              <li class="row"><div class="l"><div>Contraindicații</div></div><div class="kmuted">trombocitopenie severă, coagulopatii, infecții active, neoplazii cutanate la locul tratat, sarcină/alăptare (relativ)</div></li>
+              <li class="row"><div class="l"><div>Medicație</div></div><div class="kmuted">evită antiagregante/anticoagulante dacă e sigur clinic; individualizează</div></li>
+            </ul>
+          </div>
+          <div class="card" style="grid-column: span 6;">
+            <div class="h">2) Consimțământ & pregătire</div>
+            <div class="muted">Explică beneficiile, riscurile (edem, echimoze, durere tranzitorie), alternativele. Obține consimțământ informat. Fotografiază zona înainte/după, marchează ariile țintă.</div>
+          </div>
+          <div class="card" style="grid-column: span 6;">
+            <div class="h">3) Materiale</div>
+            <ul class="list">
+              <li class="row"><div class="l"><div>Kit recoltare</div></div><div class="kmuted">tuburi cu anticoagulant (ex. citrat), ace 21G, sistem vacuum</div></li>
+              <li class="row"><div class="l"><div>Centrifugă</div></div><div class="kmuted">dublă centrifugare (double-spin) conform producătorului</div></li>
+              <li class="row"><div class="l"><div>Seringă/ace</div></div><div class="kmuted">1–3 ml, ace 30–32G pentru intradermic</div></li>
+              <li class="row"><div class="l"><div>Anestezie</div></div><div class="kmuted">topică (opțional) 20–30 min pre-procedural</div></li>
+            </ul>
+          </div>
+          <div class="card" style="grid-column: span 6;">
+            <div class="h">4) Preparare PRP</div>
+            <div class="muted">Recoltează 10–20 ml sânge. Prima centrifugare: separare plasmă/trombocite. Transferă fracția plasmată și re-centrifughează pentru concentrarea trombocitelor. Elimină PPP (plasmă săracă) dacă e cazul, păstrează 3–6 ml PRP.</div>
+          </div>
+          <div class="card" style="grid-column: span 12;">
+            <div class="h">5) Tehnică de administrare</div>
+            <ul class="list">
+              <li class="row"><div class="l"><div>Alopecie</div></div><div class="kmuted">injecții intradermice/hipodermice superficiale la 1–1.5 cm în rețea, 0.1–0.2 ml/punct; zone: vertex, frontal</div></li>
+              <li class="row"><div class="l"><div>Cicatrici acneice</div></div><div class="kmuted">microneedling 0.5–1.5 mm + PRP topic/intradermic, focus pe depresii</div></li>
+              <li class="row"><div class="l"><div>Igienă</div></div><div class="kmuted">asepsie riguroasă, compresie blândă post-injecție</div></li>
+            </ul>
+          </div>
+          <div class="card" style="grid-column: span 12;">
+            <div class="h">6) Schema & urmărire</div>
+            <div class="muted">Inițial 3–4 ședințe la 3–4 săptămâni, apoi întreținere la 3–6 luni (individualizat). Fotodocumentare și evaluare obiectivă (densitometrie capilară, scor cicatrici).</div>
+          </div>
+          <div class="card" style="grid-column: span 6;">
+            <div class="h">7) Îngrijire post-procedură</div>
+            <div class="muted">evită spălarea 6–8 ore, efort fizic intens 24h, produse iritante 48h; protecție solară. Informează despre eritem/edem tranzitor.</div>
+          </div>
+          <div class="card" style="grid-column: span 6;">
+            <div class="h">8) Reacții adverse/complicații</div>
+            <div class="muted">durere, echimoze, edem; rareori infecție, reacții vagale. Management simptomatic; semne de alarmă: durere severă, semne infecțioase – reevaluare.</div>
+          </div>
+          <div class="card" style="grid-column: span 12;">
+            <div class="h">9) Note practice</div>
+            <div class="muted">variația între kituri și protocoale; urmărește instrucțiunile dispozitivului și literatura curentă; documentează parametrii (volum sânge, rpm/g, durată, volum injectat).</div>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    function tutorialSkeleton(name){
+      return `
+      <div class="card">
+        <div class="h">${name} – tutorial</div>
+        <div class="muted">Structură: indicații, contraindicații, materiale, pregătire, pași, îngrijire post, complicații, note.</div>
+        <div style="height:8px"></div>
+        <div class="grid">
+          <div class="card" style="grid-column: span 6;"><div class="h">Indicații</div><div class="muted">—</div></div>
+          <div class="card" style="grid-column: span 6;"><div class="h">Contraindicații</div><div class="muted">—</div></div>
+          <div class="card" style="grid-column: span 6;"><div class="h">Materiale</div><div class="muted">—</div></div>
+          <div class="card" style="grid-column: span 6;"><div class="h">Pregătire</div><div class="muted">—</div></div>
+          <div class="card" style="grid-column: span 12;"><div class="h">Pași procedurali</div><div class="muted">—</div></div>
+          <div class="card" style="grid-column: span 6;"><div class="h">Îngrijire post</div><div class="muted">—</div></div>
+          <div class="card" style="grid-column: span 6;"><div class="h">Complicații</div><div class="muted">—</div></div>
+        </div>
+      </div>`;
+    }
 
     function render(tab="Dashboard", sub=undefined){
       // Tabs active state
@@ -284,10 +407,10 @@
         return;
       }
 
-      if (tab==="Arhiva Afectiuni"){
+      if (tab==="Arhivă afecțiuni"){
         const common = specialtyCommon[currentSpecialty] || [];
         c.innerHTML = `
-          <h2 class="h">Arhiva Afectiuni</h2>
+          <h2 class="h">Arhivă afecțiuni</h2>
           <div class="muted">Specialitate selectată: <strong>${currentSpecialty}</strong></div>
           ${tool}
           ${sub==="Comune" ? `
@@ -339,6 +462,61 @@
         return;
       }
 
+      if (tab==="Proceduri"){
+        const list = specialtyProcedures[currentSpecialty] || [];
+        const chips = procedureChips(list);
+        let tutorial = '';
+        if (sub === "Tutorial detaliat") {
+          if (currentProcedure.startsWith('PRP')) tutorial = tutorialPRP();
+          else tutorial = tutorialSkeleton(currentProcedure);
+        }
+        c.innerHTML = `
+          <h2 class="h">Proceduri</h2>
+          <div class="muted">Tutoriale clinice specifice specialității: <strong>${currentSpecialty}</strong></div>
+          ${tool}
+          ${sub==="Catalog" ? `
+            <div class="card">
+              <div class="h">Catalog proceduri (${currentSpecialty})</div>
+              ${chips}
+              <div style="height:10px"></div>
+              <div class="muted">Selectează o procedură pentru a vedea detalii.</div>
+            </div>
+          ` : ''}
+          ${sub==="Tutorial detaliat" ? `
+            <div class="card">
+              <div class="h">Selectează procedura</div>
+              ${chips}
+              <div style="height:10px"></div>
+              ${tutorial}
+            </div>
+          ` : ''}
+          ${sub==="Consumabile" ? `
+            <div class="card">
+              <div class="h">Consumabile & instrumentar</div>
+              <div class="muted">Listă orientativă în funcție de procedură (ex.: tuburi citrat, centrifugă, ace 30G, seringi 1–3 ml, anestezic topic, antiseptic, materiale hemostatice).</div>
+              ${rowsGeneric(3)}
+            </div>
+          ` : ''}
+          ${sub==="Siguranță" ? `
+            <div class="card">
+              <div class="h">Siguranță, calitate și trasabilitate</div>
+              <ul class="list">
+                <li class="row"><div class="l"><div>Check-list pre-procedură</div></div><div class="kmuted">identitate, consimțământ, alergii, medicație, antisepsie</div></li>
+                <li class="row"><div class="l"><div>Standardizare</div></div><div class="kmuted">parametri documentați per procedură (volume, rpm, timp, zone)</div></li>
+                <li class="row"><div class="l"><div>Monitorizare</div></div><div class="kmuted">follow-up, rezultate obiective, raportare incidente</div></li>
+              </ul>
+            </div>
+          ` : ''}`;
+        // bind chips
+        document.querySelectorAll('.chip').forEach(el=>{
+          el.addEventListener('click', ()=>{
+            currentProcedure = el.getAttribute('data-proc');
+            render('Proceduri', sub);
+          });
+        });
+        return;
+      }
+
       if (tab==="Protocoale"){
         c.innerHTML = `
           <h2 class="h">Protocoale</h2>
@@ -384,9 +562,9 @@
         return;
       }
 
-      if (tab==="Setari"){
+      if (tab==="Setări"){
         c.innerHTML = `
-          <h2 class="h">Setari</h2>
+          <h2 class="h">Setări</h2>
           <div class="muted">Configurează opțiunile aplicației.</div>
           <div class="grid" style="margin-top:14px">
             <div class="card" style="grid-column: span 6;">
