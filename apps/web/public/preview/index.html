@@ -22,7 +22,7 @@
     .list li{display:flex;gap:10px;padding:8px 0;align-items:center}
     .cta{display:inline-block;padding:.5rem 1.25rem;border-radius:.5rem;background:#111827;border:1px solid #000;color:#fff}
     .cta:hover{filter:brightness(1.05)}
-    .art{background:#FFF1F2;position:relative;border-radius:.75rem;overflow:hidden;width:438px;min-height:280px;border:1px solid #FECACA}
+    .art{background:#ECFEFF;position:relative;border-radius:.75rem;overflow:hidden;width:438px;min-height:280px;border:1px solid #BAE6FD}
     .footer{margin-top:12px;text-align:center;color:#6B7280;font-size:.9rem}
     .links{display:flex;gap:10px;margin-top:12px}
     .link-btn{display:inline-block;padding:.5rem .9rem;border-radius:.5rem;border:1px solid #E5E7EB;background:#fff;color:#111827}
@@ -39,26 +39,26 @@
       <section class="panel">
         <div class="panel-inner">
           <h1 class="title">IzaManagement – Previzualizare statică</h1>
-          <p class="muted">Aceasta este o previzualizare statică a ecranului de întâmpinare. Backend-ul (PHP/Laravel) nu rulează aici, însă structura și stilul sunt vizibile.</p>
+          <p class="muted">Aceasta este o previzualizare statică. Aplicația completă rulează ca Next.js (App Router) pe Vercel, cu Prisma + NextAuth + Postgres.</p>
           <ul class="list">
             <li>
               <span>•</span>
-              <span>Citește <a href="https://laravel.com/docs" target="_blank" style="text-decoration:underline;color:#ef4444;margin-left:4px">Documentația Laravel</a></span>
+              <span>Documentație Next.js <a href="https://nextjs.org/docs" target="_blank" style="text-decoration:underline;color:#2563eb;margin-left:4px">nextjs.org</a></span>
             </li>
             <li>
               <span>•</span>
-              <span>Urmărește <a href="https://laracasts.com" target="_blank" style="text-decoration:underline;color:#ef4444;margin-left:4px">Laracasts</a></span>
+              <span>Prisma ORM <a href="https://www.prisma.io/docs" target="_blank" style="text-decoration:underline;color:#2563eb;margin-left:4px">prisma.io/docs</a></span>
             </li>
           </ul>
           <div class="links">
             <a class="link-btn" href="./app.html">Previzualizare UI (Română)</a>
-            <a class="link-btn" href="./code.html">Vizualizare cod</a>
-            <a class="cta" href="https://cloud.laravel.com" target="_blank">Deploy acum</a>
+            <a class="link-btn" href="./code.html">Vizualizare cod (Next.js)</a>
+            <a class="cta" href="https://vercel.com/new" target="_blank">Deploy pe Vercel</a>
           </div>
         </div>
       </section>
       <aside class="art" aria-hidden="true">
-        <svg viewBox="0 0 438 104" width="100%" height="104" style="position:absolute;top:24px;left:0;color:#F43F5E" xmlns="http://www.w3.org/2000/svg">
+        <svg viewBox="0 0 438 104" width="100%" height="104" style="position:absolute;top:24px;left:0;color:#38BDF8" xmlns="http://www.w3.org/2000/svg">
           <path d="M17.2036 -3H0V102.197H49.5189V86.7187H17.2036V-3Z" fill="currentColor" />
           <path d="M438 -3H421.694V102.197H438V-3Z" fill="currentColor" />
           <path d="M139.43 102.197H155.735V48.2834H183.712V32.1665H139.43V102.197Z" fill="currentColor" />
@@ -67,6 +67,6 @@
       </aside>
     </main>
   </div>
-  <div class="footer">Previzualizarea backend-ului este disponibilă după pornirea Docker/Nginx/PHP.</div>
+  <div class="footer">Aplicația completă: Next.js + Prisma + NextAuth + Postgres · găzduită pe Vercel.</div>
 </body>
 </html>

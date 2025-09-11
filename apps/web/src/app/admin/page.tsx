@@ -30,6 +30,8 @@ export default async function AdminPage() {
       <h2 style={{ fontSize: 18, fontWeight: 600 }}>Admin</h2>
       <p style={{ marginTop: 8 }}>Bun venit, {session.user?.name ?? session.user?.email}.</p>
       <ul style={{ marginTop: 12, listStyle: "disc", marginLeft: 18 }}>
+        <li><a href="/admin/catalog" style={{ color: "#2563eb" }}>Administrare catalog</a></li>
+        <li><a href="/admin/users" style={{ color: "#2563eb" }}>Administrare utilizatori</a></li>
         <li>Gestionare seed: <code>POST /api/seed</code> cu antet <code>x-seed-secret</code></li>
         <li>Cron: rulează la 15 minute la <code>/api/cron/every-15m</code></li>
       </ul>
