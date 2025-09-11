@@ -57,6 +57,8 @@
     .search input{flex:1;background:transparent;border:0;outline:0;color:#111827;padding:8px 10px}
     .search .ic{padding:0 8px;color:#6B7280}
     .inline-help{font-size:12px;color:var(--muted)}
+    .specialty{display:flex;align-items:center;gap:8px}
+    .select{border:1px solid var(--border);background:#fff;border-radius:8px;padding:6px 10px;color:#111827}
     @media (max-width: 960px){
       .sidebar{display:none}
       .tabs{position:sticky;top:0;z-index:5}
@@ -68,6 +70,15 @@
     <div class="brand">IzaManagement</div>
     <span class="pill">Previzualizare</span>
     <div class="spacer"></div>
+    <div class="specialty">
+      <label for="spec" class="muted" style="font-size:12px;">Specialitate</label>
+      <select id="spec" class="select">
+        <option>Dermatologie</option>
+        <option>Cardiologie</option>
+        <option>Medicină internă</option>
+        <option>Pediatrie</option>
+      </select>
+    </div>
     <a href="./index.html" class="btn" title="Ecran de bun venit">Bun venit</a>
     <a href="./code.html" class="btn" title="Vizualizare cod">Cod</a>
   </div>
@@ -75,25 +86,25 @@
   <div class="wrap">
     <aside class="sidebar">
       <div class="side-title">Navigație</div>
-      <div class="side-link active" data-tab="Tablou">🏠 Tablou de bord</div>
+      <div class="side-link active" data-tab="Dashboard">🏠 Dashboard</div>
+      <div class="side-link" data-tab="Arhiva Afectiuni">🗂️ Arhiva Afectiuni</div>
       <div class="side-link" data-tab="Cursuri">📚 Cursuri</div>
-      <div class="side-link" data-tab="Dermatologie">🧬 Dermatologie</div>
       <div class="side-link" data-tab="Protocoale">📋 Protocoale</div>
       <div class="side-link" data-tab="AI Lab">🤖 AI Lab</div>
-      <div class="side-link" data-tab="Utilizatori">👥 Utilizatori</div>
-      <div class="side-link" data-tab="Setări">⚙️ Setări</div>
-      <div style="margin-top:18px" class="inline-help">Alege un tab pentru a vedea o previzualizare a paginii.</div>
+      <div class="side-link" data-tab="Utilizator">👤 Utilizator</div>
+      <div class="side-link" data-tab="Setari">⚙️ Setari</div>
+      <div style="margin-top:18px" class="inline-help">Alege un tab pentru a vedea o previzualizare a paginii. Ordinea este optimizată pentru flux clinic.</div>
     </aside>
 
     <section class="content">
       <div class="tabs" id="tabs">
-        <div class="tab active" data-tab="Tablou">Tablou de bord</div>
+        <div class="tab active" data-tab="Dashboard">Dashboard</div>
+        <div class="tab" data-tab="Arhiva Afectiuni">Arhiva Afectiuni</div>
         <div class="tab" data-tab="Cursuri">Cursuri</div>
-        <div class="tab" data-tab="Dermatologie">Dermatologie</div>
         <div class="tab" data-tab="Protocoale">Protocoale</div>
         <div class="tab" data-tab="AI Lab">AI Lab</div>
-        <div class="tab" data-tab="Utilizatori">Utilizatori</div>
-        <div class="tab" data-tab="Setări">Setări</div>
+        <div class="tab" data-tab="Utilizator">Utilizator</div>
+        <div class="tab" data-tab="Setari">Setari</div>
       </div>
 
       <div class="subtabs" id="subtabs">
@@ -107,15 +118,85 @@
   </div>
 
   <script>
+    let currentSpecialty = 'Dermatologie';
+
     const subtabConfig = {
-      "Tablou": ["Prezentare", "Activitate", "Rapoarte"],
+      "Dashboard": ["Prezentare", "Activitate", "Rapoarte"],
+      "Arhiva Afectiuni": ["Comune", "Toate", "Căutare"],
       "Cursuri": ["Catalog", "Module", "Teste", "Recenzii"],
-      "Dermatologie": ["Afecțiuni", "Dermatoscopie", "Oncologie", "Infecții", "Pediatrie"],
       "Protocoale": ["Toate", "Ciornă", "Publicate"],
       "AI Lab": ["Chat", "Prompturi", "Istoric"],
-      "Utilizatori": ["Director", "Roluri & permisiuni", "Jurnal audit"],
-      "Setări": ["Generale", "Integrări", "Cozi", "Copii de siguranță"]
+      "Utilizator": ["Profil", "Securitate", "Preferințe"],
+      "Setari": ["Generale", "Integrări", "Cozi", "Copii de siguranță"]
     };
+
+    const specialtyCommon = {
+      "Dermatologie": [
+        ["Acnee vulgară","INFLAM"],
+        ["Psoriazis","INFLAM"],
+        ["Dermatită atopică","INFLAM"],
+        ["Dermatită seboreică","INFLAM"],
+        ["Rozacee","INFLAM"],
+        ["Eczemă de contact","INFLAM"],
+        ["Melanom (ABCDE)","ONCO"],
+        ["Carcinom bazocelular (BCC)","ONCO"],
+        ["Carcinom spinocelular (SCC)","ONCO"],
+        ["Tinea (dermatofitoze)","INFEC"],
+        ["Impetigo","INFEC"],
+        ["Herpes zoster","INFEC"],
+        ["Scabie","INFEC"],
+        ["Vitiligo","AUTOIM"],
+        ["Urticarie","ALERG"]
+      ],
+      "Cardiologie": [
+        ["Sindrom coronarian acut (SCA)","URG"],
+        ["Insuficiență cardiacă","CRON"],
+        ["Fibrilație atrială","RITM"],
+        ["Hipertensiune arterială","CRON"],
+        ["Boală cardiacă ischemică","CRON"]
+      ],
+      "Medicină internă": [
+        ["Diabet zaharat tip 2","CRON"],
+        ["HTA esențială","CRON"],
+        ["Anemie feriprivă","HEM"],
+        ["BPOC","PULM"],
+        ["Boală renală cronică","NEFRO"]
+      ],
+      "Pediatrie": [
+        ["Dermatite pediatrice frecvente","PED"],
+        ["Varicelă","INFEC"],
+        ["Scarlatină","INFEC"],
+        ["Bronșiolită","PULM"],
+        ["Otită medie acută","ORL"]
+      ]
+    };
+
+    function tagColor(tag){
+      if (["ONCO","URG","RED"].includes(tag)) return "red";
+      if (["INFEC","PULM","RITM","ORL","HEM"].includes(tag)) return "blue";
+      if (["PED","YELLOW"].includes(tag)) return "yellow";
+      return "green";
+    }
+
+    function listItems(items){
+      let html = '<div class="list">';
+      items.forEach(([name, tag]) => {
+        const color = tagColor(tag);
+        html += `
+          <div class="row">
+            <div class="l">
+              <span class="dot ${color}"></span>
+              <div>
+                <div><strong>${name}</strong></div>
+                <div class="kmuted">Recomandări rezumate • revizuite recent</div>
+              </div>
+            </div>
+            <div><span class="tag ${color}">${tag}</span></div>
+          </div>`;
+      });
+      html += '</div>';
+      return html;
+    }
 
     const rowsGeneric = (count=5) => {
       const names = ["Interacțiune AI #482", "Curs: Dermatologie Clinică", "Utilizator nou: Dr. Ionescu", "Protocol actualizat", "Recenzie curs"];
@@ -141,48 +222,7 @@
       return html;
     };
 
-    const dermList = () => {
-      const items = [
-        ["Acnee vulgară","INFLAM"],
-        ["Psoriazis","INFLAM"],
-        ["Dermatită atopică","INFLAM"],
-        ["Dermatită seboreică","INFLAM"],
-        ["Rozacee","INFLAM"],
-        ["Eczemă de contact","INFLAM"],
-        ["Melanom (ABCDE)","ONCO"],
-        ["Carcinom bazocelular (BCC)","ONCO"],
-        ["Carcinom spinocelular (SCC)","ONCO"],
-        ["Vitiligo","AUTOIM"],
-        ["Infecții fungice (tinea)","INFEC"],
-        ["Impetigo","INFEC"],
-        ["Scabie","INFEC"],
-        ["Herpes zoster","INFEC"],
-        ["Molluscum contagiosum","INFEC"],
-        ["Urticarie","ALERG"],
-        ["Hidradenită supurativă","INFLAM"],
-        ["Leziuni pediatrice frecvente","PED"]
-      ];
-      let html = '<div class="list">';
-      items.forEach((it, idx) => {
-        const [name, tag] = it;
-        const color = tag === "ONCO" ? "red" : tag === "INFEC" ? "blue" : tag === "PED" ? "yellow" : "green";
-        html += `
-          <div class="row">
-            <div class="l">
-              <span class="dot ${color}"></span>
-              <div>
-                <div><strong>${name}</strong></div>
-                <div class="kmuted">Ghid rezumat • revizuit recent</div>
-              </div>
-            </div>
-            <div><span class="tag ${color}">${tag}</span></div>
-          </div>`;
-      });
-      html += '</div>';
-      return html;
-    };
-
-    function render(tab="Tablou", sub=undefined){
+    function render(tab="Dashboard", sub=undefined){
       // Tabs active state
       document.querySelectorAll('.tab').forEach(el=>{
         el.classList.toggle('active', el.dataset.tab===tab);
@@ -222,19 +262,19 @@
           <button class="btn">+ Nou</button>
         </div>`;
 
-      if (tab==="Tablou"){
+      if (tab==="Dashboard"){
         c.innerHTML = `
-          <h2 class="h">Tablou de bord – prezentare</h2>
-          <div class="muted">KPI-uri ultimele 24h</div>
+          <h2 class="h">Dashboard</h2>
+          <div class="muted">KPI-uri focus pe ${currentSpecialty} · ultimele 24h</div>
           <div class="grid" style="margin-top:14px">
             <div class="card" style="grid-column: span 4;">
-              <div class="stat"><div>Utilizatori noi</div><div class="kpi">28</div></div>
+              <div class="stat"><div>Pacienți evaluați</div><div class="kpi">64</div></div>
             </div>
             <div class="card" style="grid-column: span 4;">
               <div class="stat"><div>Interacțiuni AI</div><div class="kpi">412</div></div>
             </div>
             <div class="card" style="grid-column: span 4;">
-              <div class="stat"><div>Finalizări curs</div><div class="kpi">76</div></div>
+              <div class="stat"><div>Cursuri finalizate</div><div class="kpi">76</div></div>
             </div>
             <div class="card" style="grid-column: span 12;">
               <h3 class="h">Activitate recentă</h3>
@@ -244,10 +284,43 @@
         return;
       }
 
+      if (tab==="Arhiva Afectiuni"){
+        const common = specialtyCommon[currentSpecialty] || [];
+        c.innerHTML = `
+          <h2 class="h">Arhiva Afectiuni</h2>
+          <div class="muted">Specialitate selectată: <strong>${currentSpecialty}</strong></div>
+          ${tool}
+          ${sub==="Comune" ? `
+            <div class="card">
+              <div class="h">Comune în ${currentSpecialty}</div>
+              ${listItems(common)}
+            </div>
+          ` : ''}
+          ${sub==="Toate" ? `
+            <div class="card">
+              <div class="h">Toate afecțiunile (exemplu)</div>
+              ${listItems(common.concat([
+                ["Dermatită de stază","INFLAM"],
+                ["Alopecie areată","AUTOIM"],
+                ["Nev displazic","ONCO"],
+                ["Moluscum contagiosum","INFEC"]
+              ]))}
+            </div>
+          ` : ''}
+          ${sub==="Căutare" ? `
+            <div class="card">
+              <div class="h">Căutare avansată</div>
+              <div class="muted">Filtrează după categorie, severitate, ghid, ICD-10.</div>
+              ${rowsGeneric(4)}
+            </div>
+          ` : ''}`;
+        return;
+      }
+
       if (tab==="Cursuri"){
         c.innerHTML = `
           <h2 class="h">Cursuri</h2>
-          <div class="muted">Gestionează catalogul, modulele, testele și recenziile.</div>
+          <div class="muted">Cursuri recomandate pentru <strong>${currentSpecialty}</strong></div>
           ${tool}
           <div class="grid">
             <div class="card" style="grid-column: span 8;">
@@ -257,7 +330,7 @@
             <div class="card" style="grid-column: span 4;">
               <h3 class="h">Filtre</h3>
               <div class="list">
-                <div class="row"><div class="l"><div>Specialitate</div></div><div class="tag blue">Dermatologie</div></div>
+                <div class="row"><div class="l"><div>Specialitate</div></div><div class="tag blue">${currentSpecialty}</div></div>
                 <div class="row"><div class="l"><div>Stare</div></div><div class="tag green">Publicat</div></div>
                 <div class="row"><div class="l"><div>Nivel</div></div><div class="tag yellow">Intermediar</div></div>
               </div>
@@ -266,19 +339,10 @@
         return;
       }
 
-      if (tab==="Dermatologie"){
-        c.innerHTML = `
-          <h2 class="h">Dermatologie</h2>
-          <div class="muted">Bază de cunoștințe și cursuri axate pe dermatologie.</div>
-          ${tool}
-          ${dermList()}`;
-        return;
-      }
-
       if (tab==="Protocoale"){
         c.innerHTML = `
-          <h2 class="h">Protocoale de tratament</h2>
-          <div class="muted">Redactează, revizuiește și publică protocoale.</div>
+          <h2 class="h">Protocoale</h2>
+          <div class="muted">Protocoale actualizate pentru <strong>${currentSpecialty}</strong></div>
           ${tool}
           ${rowsGeneric(6)}`;
         return;
@@ -287,26 +351,42 @@
       if (tab==="AI Lab"){
         c.innerHTML = `
           <h2 class="h">AI Lab</h2>
-          <div class="muted">Experimentează prompturi și analizează conversațiile.</div>
+          <div class="muted">Colaborează cu agenți AI specializați în <strong>${currentSpecialty}</strong>.</div>
           ${tool}
-          <div class="card"><div class="h">Chat prototip</div><div class="muted">Aceasta este doar o previzualizare statică.</div></div>
+          <div class="card"><div class="h">Chat prototip</div><div class="muted">Previzualizare statică.</div></div>
           <div style="height:8px"></div>
           ${rowsGeneric(4)}`;
         return;
       }
 
-      if (tab==="Utilizatori"){
+      if (tab==="Utilizator"){
         c.innerHTML = `
-          <h2 class="h">Utilizatori</h2>
-          <div class="muted">Director, roluri & permisiuni, jurnal de audit.</div>
-          ${tool}
-          ${rowsGeneric(8)}`;
+          <h2 class="h">Profilul meu</h2>
+          <div class="muted">Gestionează datele contului și preferințele.</div>
+          <div class="grid" style="margin-top:14px">
+            <div class="card" style="grid-column: span 6;">
+              <div class="h">Date personale</div>
+              <div class="muted">Nume, email, telefon</div>
+            </div>
+            <div class="card" style="grid-column: span 6;">
+              <div class="h">Specialitate</div>
+              <div class="muted">${currentSpecialty}</div>
+            </div>
+            <div class="card" style="grid-column: span 6;">
+              <div class="h">Securitate</div>
+              <div class="muted">Parolă, 2FA</div>
+            </div>
+            <div class="card" style="grid-column: span 6;">
+              <div class="h">Preferințe</div>
+              <div class="muted">Limbă, temă</div>
+            </div>
+          </div>`;
         return;
       }
 
-      if (tab==="Setări"){
+      if (tab==="Setari"){
         c.innerHTML = `
-          <h2 class="h">Setări</h2>
+          <h2 class="h">Setari</h2>
           <div class="muted">Configurează opțiunile aplicației.</div>
           <div class="grid" style="margin-top:14px">
             <div class="card" style="grid-column: span 6;">
@@ -340,8 +420,16 @@
       el.addEventListener('click', ()=> render(el.dataset.tab));
     });
 
+    document.getElementById('spec').addEventListener('change', (e)=>{
+      currentSpecialty = e.target.value;
+      // re-render current active tab
+      const active = document.querySelector('.tab.active')?.dataset.tab || 'Dashboard';
+      render(active);
+    });
+
     // Initial render
-    render("Tablou");
+    document.getElementById('spec').value = currentSpecialty;
+    render("Dashboard");
   </script>
 </body>
 </html>
