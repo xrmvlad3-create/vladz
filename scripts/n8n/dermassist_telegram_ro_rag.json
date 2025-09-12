@@ -204,7 +204,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "={{ 'https://www.googleapis.com/customsearch/v1?q=' + encodeURIComponent($json.query) + '&num=4&gl=ro&key=' + $env.GOOGLE_CSE_API_KEY + '&cx=' + $env.GOOGLE_CSE_CX }}",
+        "url": "={{ 'https://www.googleapis.com/customsearch/v1?q=' + encodeURIComponent($json.query) + '&num=4&gl=ro&key=AIzaSyCsnf6qCkLIuAoJJiBuTSa8ox2JUSnnO6w&cx=33a6a5870096340ab' }}",
         "responseFormat": "json",
         "options": {}
       },
@@ -385,11 +385,11 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "={{ 'https://www.googleapis.com/customsearch/v1?q=' + encodeURIComponent($json.query) + '&num=5&gl=ro&key=' + $env.GOOGLE_CSE_API_KEY + '&cx=' + $env.GOOGLE_CSE_CX }}",
+        "url": "={{ 'https://www.googleapis.com/customsearch/v1?q=' + encodeURIComponent($json.query) + '&num=5&gl=ro&key=AIzaSyCsnf6qCkLIuAoJJiBuTSa8ox2JUSnnO6w&cx=33a6a5870096340ab' }}",
         "responseFormat": "json",
         "options": {}
       },
-      "id": "CSE_Search_Text",
+  "id": "CSE_Search_Text",
       "name": "Căutare surse oficiale (text)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
