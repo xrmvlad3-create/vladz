@@ -1,0 +1,830 @@
+{
+  "name": "DermAssist Telegram (RO-only) - RAG Official Sources",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ]
+      },
+      "id": "TelegramTrigger",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1760,
+        160
+      ],
+      "credentials": {
+        "telegramApi": {
+          "name": "Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "keepOnlySet": false,
+        "values": {
+          "string": [
+            {
+              "name": "chat_id",
+              "value": "={{$json[\"message\"][\"chat\"][\"id\"]}}"
+            },
+            {
+              "name": "caption",
+              "value": "={{$json[\"message\"][\"caption\"] || \"\"}}"
+            },
+            {
+              "name": "text",
+              "value": "={{$json[\"message\"][\"text\"] || \"\"}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "SetChatInfo",
+      "name": "Set Chat Info",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -1560,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "collection": [
+            {
+              "operation": "exists",
+              "value1": "={{$json[\"message\"][\"photo\"]}}"
+            }
+          ]
+        }
+      },
+      "id": "IfHasPhoto",
+      "name": "Are foto?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -1360,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://api.telegram.org/bot' + $env.TELEGRAM_BOT_TOKEN + '/getFile?file_id=' + $json[\"message\"][\"photo\"][$json[\"message\"][\"photo\"].length - 1][\"file_id\"] }}",
+        "responseFormat": "json",
+        "options": {}
+      },
+      "id": "TG_GetFile",
+      "name": "TG getFile (foto)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -1180,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://api.telegram.org/file/bot' + $env.TELEGRAM_BOT_TOKEN + '/' + $json[\"result\"][\"file_path\"] }}",
+        "responseFormat": "file",
+        "download": true,
+        "binaryPropertyName": "photo",
+        "options": {}
+      },
+      "id": "TG_DownloadFile",
+      "name": "TG download (foto)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -980,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "binaryToJson",
+        "binaryPropertyName": "photo",
+        "dataPropertyName": "image_b64",
+        "options": {
+          "keepAsBase64": true
+        }
+      },
+      "id": "BinaryToBase64",
+      "name": "Imagine → Base64",
+      "type": "n8n-nodes-base.moveBinaryData",
+      "typeVersion": 1,
+      "position": [
+        -780,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": false,
+        "values": {
+          "string": [
+            {
+              "name": "system_prompt_vision_rag_ro",
+              "value": "Răspunde EXCLUSIV în limba română. Ești asistent clinic dermatologic. Privești o imagine a unei leziuni cutanate. Analizează pe scurt morfologia/distribuția/evoluția/ABCDE dacă se aplică. Apoi generează STRICT un obiect JSON cu cheile: differential (array de 3–7 diagnostice diferențiale, denumiri standard), queries (array de 3–6 interogări de căutare potrivite în română/engleză pentru surse oficiale), summary_ro (un rezumat concis, 250–400 cuvinte, în română, structurat în 6 secțiuni: 1) Caracteristici vizuale; 2) Diagnostic diferențial cu probabilitate ridicat/mediu/scăzut; 3) Semnale de alarmă; 4) Pași următori (examinare, dermatoscopie, investigații de bază, indicații de biopsie/excizie cu margini); 5) Consiliere pacient; 6) Ce informații/imagine suplimentară ar ajuta). Nu oferi diagnostice definitive. Nu cita surse aici. Output: doar JSON conform cerinței."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "SetPromptVisionRAG",
+      "name": "Set Prompt Vizual RAG (RO)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -580,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendBody": true,
+        "jsonParameters": true,
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$env.OPENAI_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {},
+        "bodyParametersJson": "={{ JSON.stringify({ model: 'gpt-4o-mini', temperature: 0.1, response_format: { type: 'json_object' }, messages: [ { role: 'system', content: $node['Set Prompt Vizual RAG (RO)'].json.system_prompt_vision_rag_ro }, { role: 'user', content: [ { type: 'text', text: ( $node['Set Chat Info'].json.caption ? ('Context (legendă): ' + $node['Set Chat Info'].json.caption) : 'Analizează imaginea.' ) }, { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,' + $node['Imagine → Base64'].json.image_b64, detail: 'high' } } ] } ] }) }}"
+      },
+      "id": "OpenAI_Vision_JSON",
+      "name": "OpenAI Vision → JSON",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -380,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const content = $json?.choices?.[0]?.message?.content;\nlet parsed = {};\ntry {\n  parsed = JSON.parse(content);\n} catch (e) {\n  parsed = { differential: [], queries: [], summary_ro: '' };\n}\nreturn [{ json: parsed }];"
+      },
+      "id": "ParseVisionJSON",
+      "name": "Parse Vision JSON",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        -180,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const queries = ($json.queries || []).slice(0, 5);\nif (!queries.length) {\n  const caption = $node['Set Chat Info'].json.caption || '';\n  if (caption) queries.push(caption);\n}\nreturn queries.map(q => ({ json: { query: q } }));"
+      },
+      "id": "BuildQueriesFromVision",
+      "name": "Build Queries (foto)",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        20,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://www.googleapis.com/customsearch/v1?q=' + encodeURIComponent($json.query) + '&num=4&gl=ro&key=' + $env.GOOGLE_CSE_API_KEY + '&cx=' + $env.GOOGLE_CSE_CX }}",
+        "responseFormat": "json",
+        "options": {}
+      },
+      "id": "CSE_Search_Photo",
+      "name": "Căutare surse oficiale (foto)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        220,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const list = $json.items || [];\nreturn list.slice(0, 4).map(i => ({ json: { title: i.title, link: i.link, snippet: i.snippet } }));"
+      },
+      "id": "ExtractSearchResults_Photo",
+      "name": "Extrage rezultate (foto)",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        420,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$json.link}}",
+        "responseFormat": "string",
+        "options": {
+          "redirect": {
+            "followRedirects": true
+          }
+        }
+      },
+      "id": "FetchPages_Photo",
+      "name": "Fetch pagini (foto)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        620,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "mergeByIndex"
+      },
+      "id": "MergeLinkAndBody_Photo",
+      "name": "Îmbină link + conținut (foto)",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [
+        820,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "let html = String($json.data || $json.body || '');\nhtml = html.replace(/<script[\\s\\S]*?<\\/script>/gi, '')\n           .replace(/<style[\\s\\S]*?<\\/style>/gi, '')\n           .replace(/<[^>]+>/g, ' ')\n           .replace(/\\s+/g, ' ')\n           .trim();\nhtml = html.slice(0, 12000);\nreturn [{ json: { title: $json.title, link: $json.link, text: html } }];"
+      },
+      "id": "CleanHTML_Photo",
+      "name": "Curăță HTML (foto)",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        1020,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const items = $input.all();\nconst unique = [];\nconst seen = new Set();\nfor (const it of items) {\n  const url = it.json.link;\n  if (!url || seen.has(url)) continue;\n  seen.add(url);\n  unique.push({ title: it.json.title || url, url, text: it.json.text || '' });\n  if (unique.length >= 5) break;\n}\nconst ctx = unique.map((u, i) => `[${i+1}] ${u.title} - ${u.url}\\n${u.text}`).join('\\n\\n');\nreturn [{ json: { context: ctx.slice(0, 25000), sources: unique } }];"
+      },
+      "id": "AggregateContext_Photo",
+      "name": "Agregă context (foto)",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        1220,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": false,
+        "values": {
+          "string": [
+            {
+              "name": "system_prompt_rag_ro",
+              "value": "Ești asistent clinic dermatologic. Răspunde EXCLUSIV în limba română. Folosește DOAR contextul furnizat (extrase din surse oficiale: WHO, CDC, NICE, AAD/EADV, DermNet NZ, BMJ Best Practice etc.). Nu inventa informații și nu folosi cunoștințe din afara contextului. Dacă un detaliu nu este prezent în context, notează clar „necesită verificare în sursele oficiale”. Structurează răspunsul profesional: diferențiale cu probabilități și raționament, semnale de alarmă, pași următori (examinare, dermatoscopie, investigații, biopsie/excizie), consiliere, ce date mai lipsesc. Adaugă citări [1], [2]… raportate la lista de surse. Încheie cu: „Acest răspuns reprezintă suport decizional clinic, nu un diagnostic. Utilizați judecata clinică și ghidurile locale.”"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "SetRAGPromptRO",
+      "name": "Set RAG Prompt (RO)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        1420,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendBody": true,
+        "jsonParameters": true,
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$env.OPENAI_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {},
+        "bodyParametersJson": "={{ JSON.stringify({ model: 'gpt-4o-mini', temperature: 0.2, messages: [ { role: 'system', content: $node['Set RAG Prompt (RO)'].json.system_prompt_rag_ro }, { role: 'user', content: 'Analiză imagine (rezumat model):\\n' + $node['Parse Vision JSON'].json.summary_ro + '\\n\\nContext oficial (extrase, numerotate):\\n' + $node['Agregă context (foto)'].json.context + '\\n\\nInstrucțiuni: răspunde concis și profesionist, citează cu [1], [2]… și listează la final sursele în ordinea utilizată.' } ] }) }}"
+      },
+      "id": "OpenAI_Summarize_Photo",
+      "name": "OpenAI Sinteză (foto, RAG)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1620,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendMessage",
+        "chatId": "={{$node['Set Chat Info'].json.chat_id}}",
+        "text": "={{$json[\"choices\"][0][\"message\"][\"content\"]}}"
+      },
+      "id": "TG_SendVision_RAG",
+      "name": "Telegram → Trimite (foto, RAG)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        1820,
+        -40
+      ],
+      "credentials": {
+        "telegramApi": {
+          "name": "Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "keepOnlySet": false,
+        "values": {
+          "string": [
+            {
+              "name": "query",
+              "value": "={{$node['Set Chat Info'].json.text}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "BuildQuery_Text",
+      "name": "Construiește interogare (text)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -1180,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://www.googleapis.com/customsearch/v1?q=' + encodeURIComponent($json.query) + '&num=5&gl=ro&key=' + $env.GOOGLE_CSE_API_KEY + '&cx=' + $env.GOOGLE_CSE_CX }}",
+        "responseFormat": "json",
+        "options": {}
+      },
+      "id": "CSE_Search_Text",
+      "name": "Căutare surse oficiale (text)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -980,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const list = $json.items || [];\nreturn list.slice(0, 5).map(i => ({ json: { title: i.title, link: i.link, snippet: i.snippet } }));"
+      },
+      "id": "ExtractSearchResults_Text",
+      "name": "Extrage rezultate (text)",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        -780,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$json.link}}",
+        "responseFormat": "string",
+        "options": {
+          "redirect": {
+            "followRedirects": true
+          }
+        }
+      },
+      "id": "FetchPages_Text",
+      "name": "Fetch pagini (text)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -580,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "mergeByIndex"
+      },
+      "id": "MergeLinkAndBody_Text",
+      "name": "Îmbină link + conținut (text)",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [
+        -380,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "let html = String($json.data || $json.body || '');\nhtml = html.replace(/<script[\\s\\S]*?<\\/script>/gi, '')\n           .replace(/<style[\\s\\S]*?<\\/style>/gi, '')\n           .replace(/<[^>]+>/g, ' ')\n           .replace(/\\s+/g, ' ')\n           .trim();\nhtml = html.slice(0, 12000);\nreturn [{ json: { title: $json.title, link: $json.link, text: html } }];"
+      },
+      "id": "CleanHTML_Text",
+      "name": "Curăță HTML (text)",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        -180,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const items = $input.all();\nconst unique = [];\nconst seen = new Set();\nfor (const it of items) {\n  const url = it.json.link;\n  if (!url || seen.has(url)) continue;\n  seen.add(url);\n  unique.push({ title: it.json.title || url, url, text: it.json.text || '' });\n  if (unique.length >= 6) break;\n}\nconst ctx = unique.map((u, i) => `[${i+1}] ${u.title} - ${u.url}\\n${u.text}`).join('\\n\\n');\nreturn [{ json: { context: ctx.slice(0, 25000), sources: unique } }];"
+      },
+      "id": "AggregateContext_Text",
+      "name": "Agregă context (text)",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        20,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendBody": true,
+        "jsonParameters": true,
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$env.OPENAI_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {},
+        "bodyParametersJson": "={{ JSON.stringify({ model: 'gpt-4o-mini', temperature: 0.2, messages: [ { role: 'system', content: $node['Set RAG Prompt (RO)'].json.system_prompt_rag_ro }, { role: 'user', content: 'Întrebare: ' + ($node['Set Chat Info'].json.text || '') + '\\n\\nContext oficial (extrase, numerotate):\\n' + $node['Agregă context (text)'].json.context + '\\n\\nInstrucțiuni: răspunde concis și profesionist, citează cu [1], [2]… și listează la final sursele în ordinea utilizată.' } ] }) }}"
+      },
+      "id": "OpenAI_Summarize_Text",
+      "name": "OpenAI Sinteză (text, RAG)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        220,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendMessage",
+        "chatId": "={{$node['Set Chat Info'].json.chat_id}}",
+        "text": "={{$json[\"choices\"][0][\"message\"][\"content\"]}}"
+      },
+      "id": "TG_SendText_RAG",
+      "name": "Telegram → Trimite (text, RAG)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        420,
+        360
+      ],
+      "credentials": {
+        "telegramApi": {
+          "name": "Telegram Bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Chat Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Chat Info": {
+      "main": [
+        [
+          {
+            "node": "Are foto?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Are foto?": {
+      "main": [
+        [
+          {
+            "node": "TG getFile (foto)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Construiește interogare (text)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TG getFile (foto)": {
+      "main": [
+        [
+          {
+            "node": "TG download (foto)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TG download (foto)": {
+      "main": [
+        [
+          {
+            "node": "Imagine → Base64",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Imagine → Base64": {
+      "main": [
+        [
+          {
+            "node": "Set Prompt Vizual RAG (RO)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Prompt Vizual RAG (RO)": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Vision → JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Vision → JSON": {
+      "main": [
+        [
+          {
+            "node": "Parse Vision JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Vision JSON": {
+      "main": [
+        [
+          {
+            "node": "Build Queries (foto)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Queries (foto)": {
+      "main": [
+        [
+          {
+            "node": "Căutare surse oficiale (foto)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Căutare surse oficiale (foto)": {
+      "main": [
+        [
+          {
+            "node": "Extrage rezultate (foto)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extrage rezultate (foto)": {
+      "main": [
+        [
+          {
+            "node": "Fetch pagini (foto)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch pagini (foto)": {
+      "main": [
+        [
+          {
+            "node": "Îmbină link + conținut (foto)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Îmbină link + conținut (foto)": {
+      "main": [
+        [
+          {
+            "node": "Curăță HTML (foto)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Curăță HTML (foto)": {
+      "main": [
+        [
+          {
+            "node": "Agregă context (foto)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agregă context (foto)": {
+      "main": [
+        [
+          {
+            "node": "Set RAG Prompt (RO)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set RAG Prompt (RO)": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Sinteză (foto, RAG)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "OpenAI Sinteză (text, RAG)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Sinteză (foto, RAG)": {
+      "main": [
+        [
+          {
+            "node": "Telegram → Trimite (foto, RAG)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Construiește interogare (text)": {
+      "main": [
+        [
+          {
+            "node": "Căutare surse oficiale (text)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Căutare surse oficiale (text)": {
+      "main": [
+        [
+          {
+            "node": "Extrage rezultate (text)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extrage rezultate (text)": {
+      "main": [
+        [
+          {
+            "node": "Fetch pagini (text)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch pagini (text)": {
+      "main": [
+        [
+          {
+            "node": "Îmbină link + conținut (text)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Îmbină link + conținut (text)": {
+      "main": [
+        [
+          {
+            "node": "Curăță HTML (text)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Curăță HTML (text)": {
+      "main": [
+        [
+          {
+            "node": "Agregă context (text)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agregă context (text)": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Sinteză (text, RAG)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Sinteză (text, RAG)": {
+      "main": [
+        [
+          {
+            "node": "Telegram → Trimite (text, RAG)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {},
+  "staticData": null,
+  "id": "DermAssistTelegramRO_RAG"
+}
