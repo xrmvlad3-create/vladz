@@ -1,0 +1,346 @@
+{
+  "name": "IzAssistantBot - Chat Test RAG (RO-only, Official Sources)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "izchat",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "Webhook_Chat",
+      "name": "Chat Trigger (test)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1800,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": false,
+        "values": {
+          "string": [
+            {
+              "name": "user_text",
+              "value": "={{ $json.body?.text || $json.body?.query || $json.body?.q || '' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "Set_Input",
+      "name": "Set Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -1600,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": false,
+        "values": {
+          "string": [
+            {
+              "name": "system_prompt_rag_ro",
+              "value": "Răspunde EXCLUSIV în limba română. Ești asistent clinic (dermatologie/medicină) pentru un medic. Folosește DOAR contextul furnizat (extrase din surse oficiale precum WHO, CDC, NICE, AAD/EADV, DermNet NZ, BMJ Best Practice, ghiduri naționale). Nu inventa informații și nu utiliza cunoștințe din afara contextului. Dacă lipsește o informație, afirmă explicit: „necesită verificare în sursele oficiale”. Structură recomandată: 1) Răspuns concis și prudent; 2) Diagnostic diferențial/plan (dacă e cazul); 3) Semnale de alarmă; 4) Pași următori și recomandări; 5) Ce date lipsesc; 6) Citări [1], [2]… cu sursele listate la final. Încheie cu: „Acest răspuns reprezintă suport decizional clinic, nu un diagnostic. Utilizați judecata clinică și ghidurile locale.”"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "Set_RAG_Prompt",
+      "name": "Set RAG Prompt (RO)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -1400,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": false,
+        "values": {
+          "string": [
+            {
+              "name": "query",
+              "value": "={{ $node[\"Set Input\"].json.user_text }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "Build_Query",
+      "name": "Build Query",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -1200,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://www.googleapis.com/customsearch/v1?q=' + encodeURIComponent($json.query) + '&num=6&gl=ro&key=AIzaSyCsnf6qCkLIuAoJJiBuTSa8ox2JUSnnO6w&cx=33a6a5870096340ab' }}",
+        "responseFormat": "json",
+        "options": {}
+      },
+      "id": "CSE_Search",
+      "name": "Căutare surse oficiale",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -1000,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const allowed = [\n  'who.int',\n  'cdc.gov',\n  'nice.org.uk',\n  'aad.org',\n  'eadv.org',\n  'dermnetnz.org',\n  'bmj.com',\n  'bestpractice.bmj.com',\n  'gov.uk',\n  'ema.europa.eu'\n];\nconst items = ($json.items || []).map(i => ({\n  title: i.title,\n  link: i.link,\n  snippet: i.snippet || ''\n}));\nfunction domainOf(url) { try { return new URL(url).hostname.replace(/^www\\./,''); } catch(e) { return ''; } }\nconst filtered = items.filter(it => {\n  const host = domainOf(it.link);\n  return allowed.some(dom => host.endsWith(dom));\n});\nreturn filtered.slice(0, 5).map(it => ({ json: it }));"
+      },
+      "id": "Filter_Official",
+      "name": "Filtrează domenii oficiale",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.link }}",
+        "responseFormat": "string",
+        "options": {
+          "redirect": {
+            "followRedirects": true
+          }
+        }
+      },
+      "id": "Fetch_Pages",
+      "name": "Fetch pagini",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -600,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "mergeByIndex"
+      },
+      "id": "Merge_Link_Content",
+      "name": "Îmbină link + conținut",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "let html = String($json.data || $json.body || '');\nhtml = html.replace(/<script[\\s\\S]*?<\\/script>/gi, '')\n           .replace(/<style[\\s\\S]*?<\\/style>/gi, '')\n           .replace(/<[^>]+>/g, ' ')\n           .replace(/\\s+/g, ' ')\n           .trim();\nhtml = html.slice(0, 14000);\nreturn [{ json: { title: $json.title, link: $json.link, text: html } }];"
+      },
+      "id": "Clean_HTML",
+      "name": "Curăță HTML",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        -200,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const items = $input.all();\nconst unique = [];\nconst seen = new Set();\nfor (const it of items) {\n  const url = it.json.link;\n  if (!url || seen.has(url)) continue;\n  seen.add(url);\n  unique.push({ title: it.json.title || url, url, text: it.json.text || '' });\n  if (unique.length >= 6) break;\n}\nconst ctx = unique.map((u, i) => `[${i+1}] ${u.title} - ${u.url}\\n${u.text}`).join('\\n\\n');\nreturn [{ json: { context: ctx.slice(0, 24000), sources: unique } }];"
+      },
+      "id": "Aggregate_Context",
+      "name": "Agregă context",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        0,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendBody": true,
+        "jsonParameters": true,
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$env.OPENAI_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {},
+        "bodyParametersJson": "={{ JSON.stringify({ model: 'gpt-4o-mini', temperature: 0.2, messages: [ { role: 'system', content: $node['Set RAG Prompt (RO)'].json.system_prompt_rag_ro }, { role: 'user', content: 'Întrebare utilizator:\\n' + ($node['Set Input'].json.user_text || '') + '\\n\\nContext oficial (extrase, numerotate):\\n' + $node['Agregă context'].json.context + '\\n\\nInstrucțiuni: răspunde concis, prudent, doar din context; citează cu [1], [2]… și listează la final sursele în ordinea utilizată.' } ] }) }}"
+      },
+      "id": "OpenAI_Summarize",
+      "name": "OpenAI Sinteză (RAG)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        200,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "responseBody": "={{ $json[\"choices\"][0][\"message\"][\"content\"] || 'Nu am reușit să generez un răspuns.' }}",
+        "responseCode": 200
+      },
+      "id": "Respond",
+      "name": "Returnează răspuns",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        400,
+        200
+      ]
+    }
+  ],
+  "connections": {
+    "Chat Trigger (test)": {
+      "main": [
+        [
+          {
+            "node": "Set Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Input": {
+      "main": [
+        [
+          {
+            "node": "Set RAG Prompt (RO)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set RAG Prompt (RO)": {
+      "main": [
+        [
+          {
+            "node": "Build Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Query": {
+      "main": [
+        [
+          {
+            "node": "Căutare surse oficiale",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Căutare surse oficiale": {
+      "main": [
+        [
+          {
+            "node": "Filtrează domenii oficiale",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrează domenii oficiale": {
+      "main": [
+        [
+          {
+            "node": "Fetch pagini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch pagini": {
+      "main": [
+        [
+          {
+            "node": "Îmbină link + conținut",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Îmbină link + conținut": {
+      "main": [
+        [
+          {
+            "node": "Curăță HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Curăță HTML": {
+      "main": [
+        [
+          {
+            "node": "Agregă context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agregă context": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Sinteză (RAG)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Sinteză (RAG)": {
+      "main": [
+        [
+          {
+            "node": "Returnează răspuns",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {},
+  "staticData": null,
+  "id": "IzAssistantBot_Chat_Test_RAG_RO"
+}
