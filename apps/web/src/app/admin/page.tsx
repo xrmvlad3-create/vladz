@@ -35,6 +35,7 @@ export default async function AdminPage() {
         <li><a href="/admin/courses" style={{ color: "#2563eb" }}>Administrare cursuri</a></li>
         <li><a href="/admin/teams" style={{ color: "#2563eb" }}>Grupuri (teams)</a></li>
         <li><a href="/admin/users" style={{ color: "#2563eb" }}>Administrare utilizatori</a></li>
+        <li><a href="/admin/requests" style={{ color: "#2563eb" }}>Cereri de acces</a></li>
         <li>Gestionare seed: <code>POST /api/seed</code> cu antet <code>x-seed-secret</code></li>
         <li>Cron: rulează la 15 minute la <code>/api/cron/every-15m</code></li>
       </ul>

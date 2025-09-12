@@ -10,12 +10,20 @@ try {
   run("npx prisma generate");
 
   const hasDb = !!(process.env.DATABASE_URL && process.env.DATABASE_URL.trim() !== "");
+  const shouldPush =
+    hasDb &&
+    (process.env.PRISMA_DB_PUSH === "1" || `${process.env.PRISMA_DB_PUSH}`.toLowerCase() === "true");
 
-  // Only push schema if DATABASE_URL is present (so builds don't fail without a DB yet)
-  if (hasDb) {
-    run("npx prisma db push");
+  // Only push schema if explicitly allowed.
+  // This avoids failing Vercel builds when the DB is present but extensions/permissions are not.
+  if (shouldPush) {
+    try {
+      run("npx prisma db push");
+    } catch (e) {
+      console.warn(">>> Warning: 'prisma db push' failed, continuing build.", e?.message || e);
+    }
   } else {
-    console.log(">>> Skipping 'prisma db push' because DATABASE_URL is not set.");
+    console.log(">>> Skipping 'prisma db push' (set PRISMA_DB_PUSH=1 to enable).");
   }
 
   // Optionally seed the DB during build if explicitly requested

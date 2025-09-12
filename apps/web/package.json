@@ -10,7 +10,8 @@
     "lint": "next lint",
     "prisma:studio": "prisma studio",
     "seed": "prisma db seed",
-    "import:mondo": "ts-node scripts/import-mondo.ts ./data/mondo-slim.json dermatologie"
+    "import:mondo": "ts-node scripts/import-mondo.ts ./data/mondo-slim.json dermatologie",
+    "postinstall": "prisma generate"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
