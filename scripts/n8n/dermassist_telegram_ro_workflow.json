@@ -125,6 +125,32 @@
     },
     {
       "parameters": {
+        "keepOnlySet": false,
+        "values": {
+          "string": [
+            {
+              "name": "system_prompt_vision_ro",
+              "value": "Ești un asistent de suport decizional clinic pentru un medic dermatolog. Răspunde EXCLUSIV în limba română, concis și prudent. Nu oferi diagnostice definitive; prezintă doar diferențiale cu probabilități (ridicat/mediu/scăzut), semnale de alarmă și pași următori. Bazează recomandările numai pe surse și ghiduri oficiale sau recunoscute: UpToDate, AAD/EADV, NICE, WHO, CDC, BMJ Best Practice, DermNet NZ. Nu inventa doze, cifre sau citări. Dacă nu poți garanta baza dintr-o sursă oficială, afirmă explicit „necesită verificare în sursele oficiale” și oferă recomandări standard, sigure. La final adaugă: „Acest răspuns reprezintă suport decizional clinic, nu un diagnostic. Utilizați judecata clinică și ghidurile locale.”"
+            },
+            {
+              "name": "user_template_vision_ro",
+              "value": "Analizează imaginea folosind raționament dermatologic (morfologie, distribuție, evoluție, simptome, ABCDE dacă se aplică). Structurează răspunsul în 6 secțiuni: 1) Caracteristici cheie vizuale; 2) Diagnostic diferențial (3–7 entități) cu raționament scurt și probabilitate; 3) Semnale de alarmă pentru escaladare; 4) Pași următori (manevre la examinare, indicii dermatoscopice, investigații inițiale, când să biopsiezi, margini dacă excizia e indicată); 5) Puncte de consiliere; 6) Ce istoric sau imagini suplimentare ar ajuta. Limitează-te la ~250–400 de cuvinte. Dacă datele sunt insuficiente, cere explicit detalii. La final inserează: „Referințe (de consultat de clinician): UpToDate; AAD/EADV; NICE; WHO/CDC; BMJ Best Practice; DermNet NZ.”"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "SetPromptVisionRO",
+      "name": "Set Prompt Vizual (RO)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        140
+      ]
+    },
+    {
+      "parameters": {
         "method": "POST",
         "url": "https://api.openai.com/v1/chat/completions",
         "sendBody": true,
@@ -146,7 +172,7 @@
           ]
         },
         "options": {},
-        "bodyParametersJson": "={{ JSON.stringify({ model: 'gpt-4o-mini', temperature: 0.3, messages: [ { role: 'system', content: 'Ești un asistent de suport decizional clinic pentru un medic dermatolog autorizat. Ieșirea trebuie să fie EXCLUSIV în limba română, indiferent de limba întrebării. Fii prudent(ă), concis(ă) și explicit(ă) în privința incertitudinii. Nu oferi diagnostice certe; oferă diferențiale cu probabilități (ridicat/mediu/scăzut), semnale de alarmă și pași următori. Dacă imaginea este insuficientă, spune asta și solicită informațiile lipsă. Adaugă întotdeauna o scurtă declinare de responsabilitate la final: „Acest răspuns reprezintă suport decizional clinic, nu un diagnostic. Utilizați judecata clinică și ghidurile locale.”' }, { role: 'user', content: [ { type: 'text', text: (($json.caption ? ('Context (legendă): ' + $json.caption + '\\n') : '') + 'Analizează imaginea folosind raționament dermatologic (morfologie, distribuție, evoluție, simptome, ABCDE dacă este cazul). Structurează răspunsul astfel:\\n1) Caracteristici cheie vizuale\\n2) Diagnostic diferențial (3–7 entități) cu raționament scurt și marcaje de probabilitate (ridicat/mediu/scăzut)\\n3) Semnale de alarmă care impun escaladare\\n4) Pași următori (manevre la examinare, indicii dermatoscopice, investigații de bază dacă e cazul, când să biopsiezi, sugestii de margini dacă excizia e indicată)\\n5) Puncte de consiliere pentru pacient\\n6) Ce istoric/imagine suplimentară ar ajuta cel mai mult\\n—Limitează-te la ~250–400 de cuvinte.') }, { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,' + $json.image_b64, detail: 'high' } } ] } ] }) }}"
+        "bodyParametersJson": "={{ JSON.stringify({ model: 'gpt-4o-mini', temperature: 0.3, messages: [ { role: 'system', content: ($json.system_prompt_vision_ro || $node['Set Prompt Vizual (RO)'].json.system_prompt_vision_ro) }, { role: 'user', content: [ { type: 'text', text: (( $node['Set Chat Info'].json.caption ? ('Context (legendă): ' + $node['Set Chat Info'].json.caption + '\\n') : '' ) + ( $json.user_template_vision_ro || $node['Set Prompt Vizual (RO)'].json.user_template_vision_ro )) }, { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,' + $json.image_b64, detail: 'high' } } ] } ] }) }}"
       },
       "id": "OpenAI_Vision",
       "name": "OpenAI Vision (RO-only)",
@@ -192,6 +218,28 @@
     },
     {
       "parameters": {
+        "keepOnlySet": false,
+        "values": {
+          "string": [
+            {
+              "name": "system_prompt_text_ro",
+              "value": "Asistent pentru clinicieni (dermatologie). Răspunde EXCLUSIV în limba română, stil „fișă de gardă”: conduită, diagnostic diferențial, semnale de alarmă, doze cu unități și căi (dacă sunt necesare), pași procedurali, contraindicații și monitorizare. Bazează-te numai pe surse oficiale/ghiduri recunoscute: UpToDate, AAD/EADV, NICE, WHO, CDC, BMJ Best Practice, DermNet NZ. Nu inventa doze, ghiduri sau citări. Dacă nu ești sigur(ă), afirmă explicit „necesită verificare în sursele oficiale” și oferă recomandări generale sigure. Încheie cu: „Acest răspuns reprezintă suport decizional clinic, nu un diagnostic. Utilizați judecata clinică și ghidurile locale.”"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "SetPromptTextRO",
+      "name": "Set Prompt Text (RO)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -380,
+        470
+      ]
+    },
+    {
+      "parameters": {
         "method": "POST",
         "url": "https://api.openai.com/v1/chat/completions",
         "sendBody": true,
@@ -213,14 +261,14 @@
           ]
         },
         "options": {},
-        "bodyParametersJson": "={{ JSON.stringify({ model: 'gpt-4o-mini', temperature: 0.2, messages: [ { role: 'system', content: 'Asistent pentru clinicieni care oferă răspunsuri succinte, tip „fișă de gardă”: conduită, diagnostic diferențial, semnale de alarmă, doze cu unități și căi de administrare (dacă sunt menționate), pași procedurali, contraindicații și scurte citări/ghiduri (fără invenții). Răspunde STRICT în limba română. Dacă lipsesc detalii clinice, fă ipoteze explicite și recomandă clarificări. Adaugă la final: „Acest răspuns reprezintă suport decizional clinic, nu un diagnostic. Utilizați judecata clinică și ghidurile locale.”' }, { role: 'user', content: ($json.text || '') } ] }) }}"
+        "bodyParametersJson": "={{ JSON.stringify({ model: 'gpt-4o-mini', temperature: 0.2, messages: [ { role: 'system', content: ($json.system_prompt_text_ro || $node['Set Prompt Text (RO)'].json.system_prompt_text_ro) }, { role: 'user', content: ($node['Set Chat Info'].json.text || $json.text || '') } ] }) }}"
       },
       "id": "OpenAI_Text",
       "name": "OpenAI Q&amp;A (RO-only)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        -260,
+        -160,
         470
       ]
     },
@@ -302,7 +350,7 @@
         ],
         [
           {
-            "node": "OpenAI Q&amp;A (RO-only)",
+            "node": "Set Prompt Text (RO)",
             "type": "main",
             "index": 0
           }
@@ -335,6 +383,17 @@
       "main": [
         [
           {
+            "node": "Set Prompt Vizual (RO)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Prompt Vizual (RO)": {
+      "main": [
+        [
+          {
             "node": "OpenAI Vision (RO-only)",
             "type": "main",
             "index": 0
@@ -358,6 +417,17 @@
         [
           {
             "node": "Telegram → Trimite (foto)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Prompt Text (RO)": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Q&amp;A (RO-only)",
             "type": "main",
             "index": 0
           }
