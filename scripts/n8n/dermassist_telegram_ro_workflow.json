@@ -1,0 +1,395 @@
+{
+  "name": "DermAssist Telegram (RO-only) - n8n",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ]
+      },
+      "id": "TelegramTrigger",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1200,
+        300
+      ],
+      "credentials": {
+        "telegramApi": {
+          "name": "Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "keepOnlySet": false,
+        "values": {
+          "string": [
+            {
+              "name": "chat_id",
+              "value": "={{$json[\"message\"][\"chat\"][\"id\"]}}"
+            },
+            {
+              "name": "caption",
+              "value": "={{$json[\"message\"][\"caption\"] || \"\"}}"
+            },
+            {
+              "name": "text",
+              "value": "={{$json[\"message\"][\"text\"] || \"\"}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "SetChatInfo",
+      "name": "Set Chat Info",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -1000,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "collection": [
+            {
+              "operation": "exists",
+              "value1": "={{$json[\"message\"][\"photo\"]}}"
+            }
+          ]
+        }
+      },
+      "id": "IfHasPhoto",
+      "name": "Are foto?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://api.telegram.org/bot' + $env.TELEGRAM_BOT_TOKEN + '/getFile?file_id=' + $json[\"message\"][\"photo\"][$json[\"message\"][\"photo\"].length - 1][\"file_id\"] }}",
+        "responseFormat": "json",
+        "options": {}
+      },
+      "id": "TG_GetFile",
+      "name": "TG getFile (foto)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -600,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://api.telegram.org/file/bot' + $env.TELEGRAM_BOT_TOKEN + '/' + $json[\"result\"][\"file_path\"] }}",
+        "responseFormat": "file",
+        "download": true,
+        "binaryPropertyName": "photo",
+        "options": {}
+      },
+      "id": "TG_DownloadFile",
+      "name": "TG download (foto)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -400,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "binaryToJson",
+        "binaryPropertyName": "photo",
+        "dataPropertyName": "image_b64",
+        "options": {
+          "keepAsBase64": true
+        }
+      },
+      "id": "BinaryToBase64",
+      "name": "Imagine → Base64",
+      "type": "n8n-nodes-base.moveBinaryData",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendBody": true,
+        "jsonParameters": true,
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$env.OPENAI_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept-Language",
+              "value": "ro"
+            }
+          ]
+        },
+        "options": {},
+        "bodyParametersJson": "={{ JSON.stringify({ model: 'gpt-4o-mini', temperature: 0.3, messages: [ { role: 'system', content: 'Ești un asistent de suport decizional clinic pentru un medic dermatolog autorizat. Ieșirea trebuie să fie EXCLUSIV în limba română, indiferent de limba întrebării. Fii prudent(ă), concis(ă) și explicit(ă) în privința incertitudinii. Nu oferi diagnostice certe; oferă diferențiale cu probabilități (ridicat/mediu/scăzut), semnale de alarmă și pași următori. Dacă imaginea este insuficientă, spune asta și solicită informațiile lipsă. Adaugă întotdeauna o scurtă declinare de responsabilitate la final: „Acest răspuns reprezintă suport decizional clinic, nu un diagnostic. Utilizați judecata clinică și ghidurile locale.”' }, { role: 'user', content: [ { type: 'text', text: (($json.caption ? ('Context (legendă): ' + $json.caption + '\\n') : '') + 'Analizează imaginea folosind raționament dermatologic (morfologie, distribuție, evoluție, simptome, ABCDE dacă este cazul). Structurează răspunsul astfel:\\n1) Caracteristici cheie vizuale\\n2) Diagnostic diferențial (3–7 entități) cu raționament scurt și marcaje de probabilitate (ridicat/mediu/scăzut)\\n3) Semnale de alarmă care impun escaladare\\n4) Pași următori (manevre la examinare, indicii dermatoscopice, investigații de bază dacă e cazul, când să biopsiezi, sugestii de margini dacă excizia e indicată)\\n5) Puncte de consiliere pentru pacient\\n6) Ce istoric/imagine suplimentară ar ajuta cel mai mult\\n—Limitează-te la ~250–400 de cuvinte.') }, { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,' + $json.image_b64, detail: 'high' } } ] } ] }) }}"
+      },
+      "id": "OpenAI_Vision",
+      "name": "OpenAI Vision (RO-only)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        20,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "mergeByIndex"
+      },
+      "id": "Merge_Vision_With_Chat",
+      "name": "Îmbinare (foto): Răspuns + Chat",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [
+        240,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendMessage",
+        "chatId": "={{$json[\"chat_id\"]}}",
+        "text": "={{$json[\"choices\"][0][\"message\"][\"content\"]}}"
+      },
+      "id": "TG_SendVision",
+      "name": "Telegram → Trimite (foto)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        460,
+        220
+      ],
+      "credentials": {
+        "telegramApi": {
+          "name": "Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendBody": true,
+        "jsonParameters": true,
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$env.OPENAI_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept-Language",
+              "value": "ro"
+            }
+          ]
+        },
+        "options": {},
+        "bodyParametersJson": "={{ JSON.stringify({ model: 'gpt-4o-mini', temperature: 0.2, messages: [ { role: 'system', content: 'Asistent pentru clinicieni care oferă răspunsuri succinte, tip „fișă de gardă”: conduită, diagnostic diferențial, semnale de alarmă, doze cu unități și căi de administrare (dacă sunt menționate), pași procedurali, contraindicații și scurte citări/ghiduri (fără invenții). Răspunde STRICT în limba română. Dacă lipsesc detalii clinice, fă ipoteze explicite și recomandă clarificări. Adaugă la final: „Acest răspuns reprezintă suport decizional clinic, nu un diagnostic. Utilizați judecata clinică și ghidurile locale.”' }, { role: 'user', content: ($json.text || '') } ] }) }}"
+      },
+      "id": "OpenAI_Text",
+      "name": "OpenAI Q&amp;A (RO-only)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -260,
+        470
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "mergeByIndex"
+      },
+      "id": "Merge_Text_With_Chat",
+      "name": "Îmbinare (text): Răspuns + Chat",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [
+        20,
+        470
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendMessage",
+        "chatId": "={{$json[\"chat_id\"]}}",
+        "text": "={{$json[\"choices\"][0][\"message\"][\"content\"]}}"
+      },
+      "id": "TG_SendText",
+      "name": "Telegram → Trimite (text)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        240,
+        470
+      ],
+      "credentials": {
+        "telegramApi": {
+          "name": "Telegram Bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Chat Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Chat Info": {
+      "main": [
+        [
+          {
+            "node": "Are foto?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Îmbinare (foto): Răspuns + Chat",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Îmbinare (text): Răspuns + Chat",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Are foto?": {
+      "main": [
+        [
+          {
+            "node": "TG getFile (foto)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "OpenAI Q&amp;A (RO-only)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TG getFile (foto)": {
+      "main": [
+        [
+          {
+            "node": "TG download (foto)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TG download (foto)": {
+      "main": [
+        [
+          {
+            "node": "Imagine → Base64",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Imagine → Base64": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Vision (RO-only)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Vision (RO-only)": {
+      "main": [
+        [
+          {
+            "node": "Îmbinare (foto): Răspuns + Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Îmbinare (foto): Răspuns + Chat": {
+      "main": [
+        [
+          {
+            "node": "Telegram → Trimite (foto)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Q&amp;A (RO-only)": {
+      "main": [
+        [
+          {
+            "node": "Îmbinare (text): Răspuns + Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Îmbinare (text): Răspuns + Chat": {
+      "main": [
+        [
+          {
+            "node": "Telegram → Trimite (text)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {},
+  "staticData": null,
+  "id": "DermAssistTelegramRO"
+}
