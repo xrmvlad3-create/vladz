@@ -66,6 +66,10 @@ export default function LoginPage() {
           Intră în cont
         </button>
       </form>
+
+      <div style={{ marginTop: 12, color: "#6b7280", fontSize: 13 }}>
+        Nu ai cont? <a href="/request-access" style={{ color: "#2563eb", fontWeight: 600 }}>Cere acces</a>
+      </div>
     </main>
   );
 }

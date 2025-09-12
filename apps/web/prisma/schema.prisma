@@ -8,6 +8,24 @@ datasource db {
   extensions = [ { name = "pgcrypto" } ]
 }
 
+enum Language {
+  ro
+  en
+}
+
+enum Visibility {
+  private
+  team
+  public
+  official
+}
+
+enum DocStatus {
+  draft
+  review
+  published
+}
+
 /// Users (NextAuth + app model)
 model User {
   id        String   @id @default(uuid())
@@ -20,6 +38,43 @@ model User {
 
   accounts  Account[]
   sessions  Session[]
+
+  // authored
+  conditionTexts ConditionText[] @relation("ConditionTextAuthor")
+  procedureTexts ProcedureText[] @relation("ProcedureTextAuthor")
+  courses        Course[]        @relation("CourseOwner")
+  courseAuthors  CourseAuthor[]
+  teamsOwned     Team[]          @relation("TeamOwner")
+  teamMembers    TeamMember[]
+}
+
+/// Teams (Groups) for sharing content within a private cohort
+model Team {
+  id        String   @id @default(uuid())
+  slug      String   @unique
+  name      String
+  owner     User     @relation("TeamOwner", fields: [ownerId], references: [id])
+  ownerId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members   TeamMember[]
+  // shared resources
+  courses   Course[]
+  conditionTexts ConditionText[]
+  procedureTexts ProcedureText[]
+}
+
+model TeamMember {
+  id        String   @id @default(uuid())
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  role      String   @default("member") // owner, admin, member, viewer
+  createdAt DateTime @default(now())
+
+  @@unique([teamId, userId])
 }
 
 /// Specialty taxonomy
@@ -35,7 +90,7 @@ model Specialty {
   courses    Course[]
 }
 
-/// Medical conditions
+/// Medical conditions (canonical entries)
 model Condition {
   id           String     @id @default(uuid())
   slug         String     @unique
@@ -46,9 +101,62 @@ model Condition {
 
   specialty   Specialty  @relation(fields: [specialtyId], references: [id])
   specialtyId String
+
+  synonyms    ConditionSynonym[]
+  codes       ConditionCode[]
+  texts       ConditionText[]
 }
 
-/// Procedures
+model ConditionSynonym {
+  id          String    @id @default(uuid())
+  condition   Condition @relation(fields: [conditionId], references: [id], onDelete: Cascade)
+  conditionId String
+  term        String
+  language    Language  @default(ro)
+
+  @@index([term])
+}
+
+model ConditionCode {
+  id          String    @id @default(uuid())
+  condition   Condition @relation(fields: [conditionId], references: [id], onDelete: Cascade)
+  conditionId String
+  system      String
+  code        String
+
+  @@index([system, code])
+}
+
+model ConditionText {
+  id           String     @id @default(uuid())
+  condition    Condition  @relation(fields: [conditionId], references: [id], onDelete: Cascade)
+  conditionId  String
+  language     Language
+  version      Int        @default(1)
+  status       DocStatus  @default(draft)
+  visibility   Visibility @default(official)
+  title        String?
+  summaryMd    String?    @db.Text
+  clinicalMd   String?    @db.Text
+  diagnosticsMd String?   @db.Text
+  managementMd String?    @db.Text
+  treatmentsMd String?    @db.Text
+  references   Json?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  publishedAt  DateTime?
+
+  // authorship and sharing
+  author       User?      @relation("ConditionTextAuthor", fields: [authorId], references: [id])
+  authorId     String?
+  team         Team?      @relation(fields: [teamId], references: [id])
+  teamId       String?
+
+  @@unique([conditionId, language, version])
+  @@index([language, status, visibility])
+}
+
+/// Procedures (canonical entries)
 model Procedure {
   id           String     @id @default(uuid())
   slug         String     @unique
@@ -58,20 +166,103 @@ model Procedure {
 
   specialty   Specialty  @relation(fields: [specialtyId], references: [id])
   specialtyId String
+
+  texts       ProcedureText[]
 }
 
-/// Courses metadata (links to official providers)
+model ProcedureText {
+  id           String     @id @default(uuid())
+  procedure    Procedure  @relation(fields: [procedureId], references: [id], onDelete: Cascade)
+  procedureId  String
+  language     Language
+  version      Int        @default(1)
+  status       DocStatus  @default(draft)
+  visibility   Visibility @default(official)
+  title        String?
+  indicationsMd     String? @db.Text
+  contraindicationsMd String? @db.Text
+  materialsMd       String? @db.Text
+  preparationMd     String? @db.Text
+  stepsMd           String? @db.Text
+  aftercareMd       String? @db.Text
+  complicationsMd   String? @db.Text
+  notesMd           String? @db.Text
+  references        Json?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  publishedAt  DateTime?
+
+  author       User?      @relation("ProcedureTextAuthor", fields: [authorId], references: [id])
+  authorId     String?
+  team         Team?      @relation(fields: [teamId], references: [id])
+  teamId       String?
+
+  @@unique([procedureId, language, version])
+  @@index([language, status, visibility])
+}
+
+/// Courses metadata (now first-class authorable content)
 model Course {
   id           String     @id @default(uuid())
+  slug         String     @unique
   title        String
-  provider     String
-  url          String
-  language     String?    @default("ro")
+  description  String?    @db.Text
+  contentMd    String?    @db.Text
+  provider     String?    // optional, if external
+  url          String?    // optional external link
+  language     Language   @default(ro)
+  visibility   Visibility @default(private)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
   specialty   Specialty  @relation(fields: [specialtyId], references: [id])
   specialtyId String
+
+  // ownership and authors
+  owner       User       @relation("CourseOwner", fields: [ownerId], references: [id])
+  ownerId     String
+  team        Team?      @relation(fields: [teamId], references: [id])
+  teamId      String?
+  authors     CourseAuthor[]
+  lessons     Lesson[]
+  enrollments Enrollment[]
+}
+
+model CourseAuthor {
+  id       String @id @default(uuid())
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String
+
+  @@unique([courseId, userId])
+}
+
+model Lesson {
+  id        String   @id @default(uuid())
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId  String
+  title     String
+  contentMd String?  @db.Text
+  order     Int      @default(1)
+  language  Language @default(ro)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([courseId, order])
+}
+
+model Enrollment {
+  id        String   @id @default(uuid())
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId  String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  role      String   @default("student") // student, instructor, ta
+  progress  Int      @default(0) // 0..100
+  createdAt DateTime @default(now())
+
+  @@unique([courseId, userId])
 }
 
 /// NextAuth tables (for OAuth or future providers)
@@ -109,4 +300,19 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+/// Lead capture for request access
+model RequestAccess {
+  id           String   @id @default(uuid())
+  email        String
+  name         String?
+  role         String?   // medic, rezident, student, etc.
+  organization String?
+  message      String?   @db.Text
+  source       String?   // utm or ref
+  status       String    @default("new") // new, contacted, closed
+  createdAt    DateTime  @default(now())
+
+  @@index([email])
 }
