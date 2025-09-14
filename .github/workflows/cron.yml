@@ -1,8 +1,7 @@
 name: External Cron (GitHub Actions)
 
+# Disable automatic runs. Keep manual trigger only so it does nothing unless explicitly invoked.
 on:
-  schedule:
-    - cron: "*/15 * * * *"
   workflow_dispatch:
 
 jobs:
@@ -23,7 +22,6 @@ jobs:
           echo "HTTP status: $CODE"
           if [ "$CODE" -lt 200 ] || [ "$CODE" -ge 300 ]; then
             echo "Warning: Cron endpoint returned HTTP $CODE"
-            # Do not fail the workflow by default to avoid red X on forks/unconfigured envs
             exit 0
           fi
           echo "Cron ping succeeded."
