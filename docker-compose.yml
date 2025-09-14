@@ -1,0 +1,47 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    container_name: izamanagement-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: izauser
+      POSTGRES_PASSWORD: izapass
+      POSTGRES_DB: izamanagement
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: izamanagement-web
+    depends_on:
+      - db
+    environment:
+      # App
+      NODE_ENV: production
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: dev-dev-dev-dev-dev-dev-dev-please-change
+      SEED_SECRET: dev-seed-secret
+      # Prisma / Database
+      DATABASE_URL: postgresql://izauser:izapass@db:5432/izamanagement?schema=public
+      # Optional AI / Redis (left empty)
+      GROQ_API_KEY: ""
+      GROQ_MODEL: "llama-3.1-70b-versatile"
+      UPSTASH_REDIS_REST_URL: ""
+      UPSTASH_REDIS_REST_TOKEN: ""
+    ports:
+      - "3000:3000"
+    command: >
+      sh -lc "
+        node -v &&
+        npx prisma migrate deploy &&
+        node server.js
+      "
+
+volumes:
+  pgdata:
