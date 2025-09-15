@@ -5,6 +5,7 @@
   "builds": [
     { "src": "apps/web/next.config.mjs", "use": "@vercel/next" }
   ],
+  "installCommand": "cd apps/web && npm install",
   "env": {
     "NEXT_TELEMETRY_DISABLED": "1"
   }

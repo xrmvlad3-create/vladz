@@ -4,7 +4,13 @@ const nextConfig = {
   experimental: {
     serverActions: true
   },
-  output: 'standalone'
+  output: 'standalone',
+  async redirects() {
+    return [
+      // Serve the static preview index when visiting /preview
+      { source: '/preview', destination: '/preview/index.html', permanent: false }
+    ];
+  }
 };
 
 export default nextConfig;
