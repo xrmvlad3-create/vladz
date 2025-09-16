@@ -3,14 +3,16 @@ import { authOptions } from "@lib/auth";
 import { prisma } from "@lib/prisma";
 import { revalidatePath } from "next/cache";
 
-async function createTeam(formData: FormData) {
+export const dynamic = "force-dynamic";
+
+async function createTeam(formData: FormData): Promise<void> {
   "use server";
   const name = String(formData.get("name") || "").trim();
   const slug = String(formData.get("slug") || "").trim().toLowerCase();
   const ownerEmail = String(formData.get("ownerEmail") || "").trim().toLowerCase();
-  if (!name || !slug || !ownerEmail) return { ok: false, error: "name, slug, ownerEmail" };
+  if (!name || !slug || !ownerEmail) return;
   const owner = await prisma.user.findUnique({ where: { email: ownerEmail } });
-  if (!owner) return { ok: false, error: "Owner user not found" };
+  if (!owner) return;
   const team = await prisma.team.upsert({
     where: { slug },
     update: { name, ownerId: owner.id },
@@ -22,34 +24,31 @@ async function createTeam(formData: FormData) {
     create: { teamId: team.id, userId: owner.id, role: "owner" }
   });
   revalidatePath("/admin/teams");
-  return { ok: true };
 }
 
-async function addMember(formData: FormData) {
+async function addMember(formData: FormData): Promise<void> {
   "use server";
   const teamSlug = String(formData.get("teamSlug") || "").trim().toLowerCase();
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const role = String(formData.get("role") || "member");
-  if (!teamSlug || !email) return { ok: false };
+  if (!teamSlug || !email) return;
   const team = await prisma.team.findUnique({ where: { slug: teamSlug } });
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!team || !user) return { ok: false, error: "team or user missing" };
+  if (!team || !user) return;
   await prisma.teamMember.upsert({
     where: { teamId_userId: { teamId: team.id, userId: user.id } },
     update: { role },
     create: { teamId: team.id, userId: user.id, role }
   });
   revalidatePath("/admin/teams");
-  return { ok: true };
 }
 
-async function removeMember(formData: FormData) {
+async function removeMember(formData: FormData): Promise<void> {
   "use server";
   const id = String(formData.get("id") || "");
-  if (!id) return { ok: false };
+  if (!id) return;
   await prisma.teamMember.delete({ where: { id } }).catch(() => null);
   revalidatePath("/admin/teams");
-  return { ok: true };
 }
 
 export default async function TeamsAdminPage() {

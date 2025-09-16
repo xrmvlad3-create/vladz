@@ -3,15 +3,17 @@ import { authOptions } from "@lib/auth";
 import { prisma } from "@lib/prisma";
 import { revalidatePath } from "next/cache";
 
-async function createTeam(formData: FormData) {
+export const dynamic = "force-dynamic";
+
+async function createTeam(formData: FormData): Promise<void> {
   "use server";
   const session = await getServerSession(authOptions);
-  if (!session) return { ok: false };
+  if (!session) return;
   const name = String(formData.get("name") || "").trim();
   const slug = String(formData.get("slug") || "").trim().toLowerCase();
-  if (!name || !slug) return { ok: false };
+  if (!name || !slug) return;
   const me = await prisma.user.findUnique({ where: { email: session.user?.email || "" } });
-  if (!me) return { ok: false };
+  if (!me) return;
 
   const team = await prisma.team.upsert({
     where: { slug },
@@ -26,25 +28,24 @@ async function createTeam(formData: FormData) {
   });
 
   revalidatePath("/author/teams");
-  return { ok: true };
 }
 
-async function addMember(formData: FormData) {
+async function addMember(formData: FormData): Promise<void> {
   "use server";
   const session = await getServerSession(authOptions);
-  if (!session) return { ok: false };
+  if (!session) return;
   const teamSlug = String(formData.get("teamSlug") || "").trim().toLowerCase();
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const role = String(formData.get("role") || "member");
-  if (!teamSlug || !email) return { ok: false };
+  if (!teamSlug || !email) return;
   const me = await prisma.user.findUnique({ where: { email: session.user?.email || "" } });
-  if (!me) return { ok: false };
+  if (!me) return;
   const team = await prisma.team.findUnique({ where: { slug: teamSlug } });
-  if (!team) return { ok: false };
+  if (!team) return;
   const isOwner = team.ownerId === me.id;
-  if (!isOwner) return { ok: false, error: "doar owner poate adăuga membri" };
+  if (!isOwner) return;
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) return { ok: false, error: "utilizator inexistent" };
+  if (!user) return;
 
   await prisma.teamMember.upsert({
     where: { teamId_userId: { teamId: team.id, userId: user.id } },
@@ -53,24 +54,22 @@ async function addMember(formData: FormData) {
   });
 
   revalidatePath("/author/teams");
-  return { ok: true };
 }
 
-async function removeMember(formData: FormData) {
+async function removeMember(formData: FormData): Promise<void> {
   "use server";
   const session = await getServerSession(authOptions);
-  if (!session) return { ok: false };
+  if (!session) return;
   const id = String(formData.get("id") || "");
   const teamSlug = String(formData.get("teamSlug") || "");
-  if (!id || !teamSlug) return { ok: false };
+  if (!id || !teamSlug) return;
 
   const me = await prisma.user.findUnique({ where: { email: session.user?.email || "" } });
   const team = await prisma.team.findUnique({ where: { slug: teamSlug } });
-  if (!me || !team || team.ownerId !== me.id) return { ok: false };
+  if (!me || !team || team.ownerId !== me.id) return;
 
   await prisma.teamMember.delete({ where: { id } }).catch(() => null);
   revalidatePath("/author/teams");
-  return { ok: true };
 }
 
 export default async function AuthorTeamsPage() {

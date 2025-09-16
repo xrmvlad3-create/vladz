@@ -3,15 +3,18 @@ import { authOptions } from "@lib/auth";
 import { prisma } from "@lib/prisma";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
+import type { Prisma } from "@prisma/client";
+
+export const dynamic = "force-dynamic";
 
 // CREATE
-async function createUser(formData: FormData) {
+async function createUser(formData: FormData): Promise<void> {
   "use server";
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const name = String(formData.get("name") || "").trim();
   const role = String(formData.get("role") || "").trim() || "user";
   const password = String(formData.get("password") || "");
-  if (!email || !password) return { ok: false, error: "email și parola sunt obligatorii" };
+  if (!email || !password) return;
   const hash = await bcrypt.hash(password, 10);
   await prisma.user.create({ data: { email, name: name || null, role, password: hash } }).catch(async (e) => {
     if (String(e?.message || "").includes("Unique constraint")) {
@@ -21,41 +24,37 @@ async function createUser(formData: FormData) {
     }
   });
   revalidatePath("/admin/users");
-  return { ok: true };
 }
 
 // UPDATE
-async function updateUser(formData: FormData) {
+async function updateUser(formData: FormData): Promise<void> {
   "use server";
   const id = String(formData.get("id") || "");
   const name = String(formData.get("name") || "").trim();
   const role = String(formData.get("role") || "").trim() || "user";
-  if (!id) return { ok: false };
+  if (!id) return;
   await prisma.user.update({ where: { id }, data: { name: name || null, role } });
   revalidatePath("/admin/users");
-  return { ok: true };
 }
 
 // RESET PASSWORD
-async function resetPassword(formData: FormData) {
+async function resetPassword(formData: FormData): Promise<void> {
   "use server";
   const id = String(formData.get("id") || "");
   const password = String(formData.get("password") || "");
-  if (!id || !password) return { ok: false };
+  if (!id || !password) return;
   const hash = await bcrypt.hash(password, 10);
   await prisma.user.update({ where: { id }, data: { password: hash } });
   revalidatePath("/admin/users");
-  return { ok: true };
 }
 
 // DELETE
-async function deleteUser(formData: FormData) {
+async function deleteUser(formData: FormData): Promise<void> {
   "use server";
   const id = String(formData.get("id") || "");
-  if (!id) return { ok: false };
+  if (!id) return;
   await prisma.user.delete({ where: { id } }).catch(() => null);
   revalidatePath("/admin/users");
-  return { ok: true };
 }
 
 // SEARCH + PAGINATION
@@ -84,9 +83,15 @@ export default async function AdminUsersPage({ searchParams }: { searchParams?: 
 
   const q = typeof searchParams?.q === "string" ? searchParams?.q : "";
   const pp = typeof searchParams?.p === "string" ? searchParams?.p : "1";
-  const where = q
-    ? { OR: [{ email: { contains: q, mode: "insensitive" } }, { name: { contains: q, mode: "insensitive" } }] }
-    : {};
+  const insensitive: Prisma.QueryMode = "insensitive";
+  const where: Prisma.UserWhereInput | undefined = q
+    ? {
+        OR: [
+          { email: { contains: q, mode: insensitive } },
+          { name: { contains: q, mode: insensitive } }
+        ]
+      }
+    : undefined;
 
   const total = await prisma.user.count({ where });
   const { take, skip, page, pages } = paging(total, pp);

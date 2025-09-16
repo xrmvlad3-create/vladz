@@ -28,10 +28,13 @@ export async function POST(req: Request) {
         "Always remind to consult clinical guidelines and use clinical judgment."
     };
 
-    const normalized: AIMessage[] = [sys, ...messages.map((m: any) => ({
-      role: m.role === "assistant" ? "assistant" : m.role === "system" ? "system" : "user",
-      content: String(m.content ?? "")
-    }))];
+    const normalized: AIMessage[] = [
+      sys,
+      ...messages.map((m: any): AIMessage => ({
+        role: m.role === "assistant" ? "assistant" : m.role === "system" ? "system" : "user",
+        content: String(m.content ?? "")
+      }))
+    ];
 
     const result = await chat({
       messages: normalized,

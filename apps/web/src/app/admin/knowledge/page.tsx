@@ -3,9 +3,12 @@ import { authOptions } from "@lib/auth";
 import { prisma } from "@lib/prisma";
 import { revalidatePath } from "next/cache";
 import { DocStatus, Language, Visibility } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import TranslateClient from "./TranslateClient";
 
-async function upsertConditionText(formData: FormData) {
+export const dynamic = "force-dynamic";
+
+async function upsertConditionText(formData: FormData): Promise<void> {
   "use server";
   const conditionSlug = String(formData.get("conditionSlug") || "").trim().toLowerCase();
   const language = (String(formData.get("language") || "ro") as "ro" | "en");
@@ -21,7 +24,7 @@ async function upsertConditionText(formData: FormData) {
   const referencesRaw = String(formData.get("references") || "").trim();
 
   const cond = await prisma.condition.findUnique({ where: { slug: conditionSlug } });
-  if (!cond) return { ok: false, error: "condition not found" };
+  if (!cond) return;
   const team = teamSlug ? await prisma.team.findUnique({ where: { slug: teamSlug } }) : null;
 
   let references: any = null;
@@ -29,20 +32,23 @@ async function upsertConditionText(formData: FormData) {
     try { references = JSON.parse(referencesRaw); } catch { references = null; }
   }
 
+  const languageEnum = language === "ro" ? Language.ro : Language.en;
+  const visibilityEnum = Visibility[visibility];
+
   await prisma.conditionText.upsert({
-    where: { conditionId_language_version: { conditionId: cond.id, language: language === "ro" ? Language.ro : Language.en, version } },
+    where: { conditionId_language_version: { conditionId: cond.id, language: languageEnum, version } },
     update: {
-      visibility: visibility as any,
+      visibility: visibilityEnum,
       teamId: team?.id ?? null,
       title, summaryMd, clinicalMd, diagnosticsMd, managementMd, treatmentsMd,
       references
     },
     create: {
       conditionId: cond.id,
-      language: language === "ro" ? Language.ro : Language.en,
+      language: languageEnum,
       version,
       status: DocStatus.draft,
-      visibility: visibility as any,
+      visibility: visibilityEnum,
       teamId: team?.id ?? null,
       title, summaryMd, clinicalMd, diagnosticsMd, managementMd, treatmentsMd,
       references
@@ -50,10 +56,9 @@ async function upsertConditionText(formData: FormData) {
   });
 
   revalidatePath("/admin/knowledge");
-  return { ok: true };
 }
 
-async function upsertProcedureText(formData: FormData) {
+async function upsertProcedureText(formData: FormData): Promise<void> {
   "use server";
   const procedureSlug = String(formData.get("procedureSlug") || "").trim().toLowerCase();
   const language = (String(formData.get("language") || "ro") as "ro" | "en");
@@ -72,7 +77,7 @@ async function upsertProcedureText(formData: FormData) {
   const referencesRaw = String(formData.get("references") || "").trim();
 
   const proc = await prisma.procedure.findUnique({ where: { slug: procedureSlug } });
-  if (!proc) return { ok: false, error: "procedure not found" };
+  if (!proc) return;
   const team = teamSlug ? await prisma.team.findUnique({ where: { slug: teamSlug } }) : null;
 
   let references: any = null;
@@ -80,20 +85,23 @@ async function upsertProcedureText(formData: FormData) {
     try { references = JSON.parse(referencesRaw); } catch { references = null; }
   }
 
+  const languageEnum = language === "ro" ? Language.ro : Language.en;
+  const visibilityEnum = Visibility[visibility];
+
   await prisma.procedureText.upsert({
-    where: { procedureId_language_version: { procedureId: proc.id, language: language === "ro" ? Language.ro : Language.en, version } },
+    where: { procedureId_language_version: { procedureId: proc.id, language: languageEnum, version } },
     update: {
-      visibility: visibility as any,
+      visibility: visibilityEnum,
       teamId: team?.id ?? null,
       title, indicationsMd, contraindicationsMd, materialsMd, preparationMd, stepsMd, aftercareMd, complicationsMd, notesMd,
       references
     },
     create: {
       procedureId: proc.id,
-      language: language === "ro" ? Language.ro : Language.en,
+      language: languageEnum,
       version,
       status: DocStatus.draft,
-      visibility: visibility as any,
+      visibility: visibilityEnum,
       teamId: team?.id ?? null,
       title, indicationsMd, contraindicationsMd, materialsMd, preparationMd, stepsMd, aftercareMd, complicationsMd, notesMd,
       references
@@ -101,7 +109,6 @@ async function upsertProcedureText(formData: FormData) {
   });
 
   revalidatePath("/admin/knowledge");
-  return { ok: true };
 }
 
 export default async function KnowledgeAdminPage({ searchParams }: { searchParams?: Record<string, string | string[]> }) {
@@ -121,9 +128,28 @@ export default async function KnowledgeAdminPage({ searchParams }: { searchParam
   const cq = typeof searchParams?.cq === "string" ? searchParams?.cq : "";
   const pq = typeof searchParams?.pq === "string" ? searchParams?.pq : "";
 
+  const insensitive: Prisma.QueryMode = "insensitive";
+
+  const conditionWhere: Prisma.ConditionWhereInput | undefined = cq
+    ? {
+        OR: [
+          { name: { contains: cq, mode: insensitive } },
+          { slug: { contains: cq, mode: insensitive } }
+        ]
+      }
+    : undefined;
+  const procedureWhere: Prisma.ProcedureWhereInput | undefined = pq
+    ? {
+        OR: [
+          { name: { contains: pq, mode: insensitive } },
+          { slug: { contains: pq, mode: insensitive } }
+        ]
+      }
+    : undefined;
+
   const [conditions, procedures] = await Promise.all([
     prisma.condition.findMany({
-      where: cq ? { OR: [{ name: { contains: cq, mode: "insensitive" } }, { slug: { contains: cq, mode: "insensitive" } }] } : {},
+      where: conditionWhere,
       orderBy: [{ isCommon: "desc" }, { name: "asc" }],
       take: 50,
       include: {
@@ -134,7 +160,7 @@ export default async function KnowledgeAdminPage({ searchParams }: { searchParam
       }
     }),
     prisma.procedure.findMany({
-      where: pq ? { OR: [{ name: { contains: pq, mode: "insensitive" } }, { slug: { contains: pq, mode: "insensitive" } }] } : {},
+      where: procedureWhere,
       orderBy: [{ name: "asc" }],
       take: 50,
       include: {
