@@ -2,33 +2,35 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@lib/auth";
 import { prisma } from "@lib/prisma";
 import { revalidatePath } from "next/cache";
+import type { Prisma } from "@prisma/client";
 
-async function updateStatusAction(formData: FormData) {
+export const dynamic = "force-dynamic";
+
+async function updateStatusAction(formData: FormData): Promise<void> {
   "use server";
   const id = String(formData.get("id") || "");
   const status = String(formData.get("status") || "new");
-  if (!id) return { ok: false };
+  if (!id) return;
   await prisma.requestAccess.update({ where: { id }, data: { status } }).catch(() => {});
   revalidatePath("/admin/requests");
-  return { ok: true };
 }
 
-async function deleteAction(formData: FormData) {
+async function deleteAction(formData: FormData): Promise<void> {
   "use server";
   const id = String(formData.get("id") || "");
-  if (!id) return { ok: false };
+  if (!id) return;
   await prisma.requestAccess.delete({ where: { id } }).catch(() => {});
   revalidatePath("/admin/requests");
-  return { ok: true };
 }
 
 async function getData(q: string | null, status: string | null, page = 1, perPage = 20) {
-  const where: any = {};
+  const insensitive: Prisma.QueryMode = "insensitive";
+  const where: Prisma.RequestAccessWhereInput = {};
   if (q) {
     where.OR = [
-      { email: { contains: q, mode: "insensitive" } },
-      { name: { contains: q, mode: "insensitive" } },
-      { organization: { contains: q, mode: "insensitive" } }
+      { email: { contains: q, mode: insensitive } },
+      { name: { contains: q, mode: insensitive } },
+      { organization: { contains: q, mode: insensitive } }
     ];
   }
   if (status && status !== "all") {

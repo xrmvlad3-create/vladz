@@ -1,10 +1,10 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const [email, setEmail] = useState("");
@@ -71,5 +71,13 @@ export default function LoginPage() {
         Nu ai cont? <a href="/request-access" style={{ color: "#2563eb", fontWeight: 600 }}>Cere acces</a>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<main>Se încarcă…</main>}>
+      <LoginForm />
+    </Suspense>
   );
 }

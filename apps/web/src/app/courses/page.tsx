@@ -1,15 +1,17 @@
 import { prisma } from "@lib/prisma";
+import type { Prisma } from "@prisma/client";
 
 async function getData(q: string | null, limit = 200) {
   try {
-    const where = q
+    const insensitive: Prisma.QueryMode = "insensitive";
+    const where: Prisma.CourseWhereInput | undefined = q
       ? {
           OR: [
-            { title: { contains: q, mode: "insensitive" } },
-            { provider: { contains: q, mode: "insensitive" } }
+            { title: { contains: q, mode: insensitive } },
+            { provider: { contains: q, mode: insensitive } }
           ]
         }
-      : {};
+      : undefined;
     const [items, total] = await Promise.all([
       prisma.course.findMany({
         where,
@@ -61,11 +63,13 @@ export default async function CoursesPage({ searchParams }: { searchParams?: { q
             <div style={{ color: "#6b7280", fontSize: 12, marginTop: 2 }}>
               {c.provider} • {c.language?.toUpperCase() || "RO"} • {c.specialty?.name ?? "General"}
             </div>
-            <div style={{ marginTop: 8 }}>
-              <a href={c.url} target="_blank" style={{ color: "#2563eb" }} rel="noreferrer">
-                Deschide pagina cursului →
-              </a>
-            </div>
+            {c.url ? (
+              <div style={{ marginTop: 8 }}>
+                <a href={c.url} target="_blank" style={{ color: "#2563eb" }} rel="noreferrer">
+                  Deschide pagina cursului →
+                </a>
+              </div>
+            ) : null}
           </div>
         ))}
       </div>

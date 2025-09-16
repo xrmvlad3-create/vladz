@@ -1,7 +1,7 @@
 import { prisma } from "@lib/prisma";
 import { revalidatePath } from "next/cache";
 
-async function submit(formData: FormData) {
+async function submit(formData: FormData): Promise<void> {
   "use server";
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const name = String(formData.get("name") || "").trim() || null;
@@ -11,7 +11,7 @@ async function submit(formData: FormData) {
   const source = String(formData.get("source") || "").trim() || null;
 
   if (!email) {
-    return { ok: false, error: "email obligatoriu" };
+    return;
   }
 
   await prisma.requestAccess.create({
@@ -22,7 +22,6 @@ async function submit(formData: FormData) {
   });
 
   revalidatePath("/request-access");
-  return { ok: true };
 }
 
 export default function RequestAccessPage() {

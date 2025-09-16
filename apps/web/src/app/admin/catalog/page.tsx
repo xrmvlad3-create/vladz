@@ -2,29 +2,31 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@lib/auth";
 import { prisma } from "@lib/prisma";
 import { revalidatePath } from "next/cache";
+import type { Prisma } from "@prisma/client";
+
+export const dynamic = "force-dynamic";
 
 // CREATE
-async function addSpecialty(formData: FormData) {
+async function addSpecialty(formData: FormData): Promise<void> {
   "use server";
   const slug = String(formData.get("slug") || "").trim().toLowerCase();
   const name = String(formData.get("name") || "").trim();
-  if (!slug || !name) return { ok: false, error: "slug și name sunt obligatorii" };
+  if (!slug || !name) return;
   await prisma.specialty.upsert({
     where: { slug },
     update: { name },
     create: { slug, name }
   });
   revalidatePath("/admin/catalog");
-  return { ok: true };
 }
 
-async function addCondition(formData: FormData) {
+async function addCondition(formData: FormData): Promise<void> {
   "use server";
   const slug = String(formData.get("slug") || "").trim().toLowerCase();
   const name = String(formData.get("name") || "").trim();
   const specialtySlug = String(formData.get("specialtySlug") || "").trim().toLowerCase();
   const isCommon = String(formData.get("isCommon") || "") === "on";
-  if (!slug || !name || !specialtySlug) return { ok: false, error: "slug, name, specialtySlug sunt obligatorii" };
+  if (!slug || !name || !specialtySlug) return;
   const sp = await prisma.specialty.upsert({
     where: { slug: specialtySlug },
     update: {},
@@ -36,15 +38,14 @@ async function addCondition(formData: FormData) {
     create: { slug, name, isCommon, specialtyId: sp.id }
   });
   revalidatePath("/admin/catalog");
-  return { ok: true };
 }
 
-async function addProcedure(formData: FormData) {
+async function addProcedure(formData: FormData): Promise<void> {
   "use server";
   const slug = String(formData.get("slug") || "").trim().toLowerCase();
   const name = String(formData.get("name") || "").trim();
   const specialtySlug = String(formData.get("specialtySlug") || "").trim().toLowerCase();
-  if (!slug || !name || !specialtySlug) return { ok: false, error: "slug, name, specialtySlug sunt obligatorii" };
+  if (!slug || !name || !specialtySlug) return;
   const sp = await prisma.specialty.upsert({
     where: { slug: specialtySlug },
     update: {},
@@ -56,63 +57,56 @@ async function addProcedure(formData: FormData) {
     create: { slug, name, specialtyId: sp.id }
   });
   revalidatePath("/admin/catalog");
-  return { ok: true };
 }
 
 // UPDATE
-async function updateSpecialty(formData: FormData) {
+async function updateSpecialty(formData: FormData): Promise<void> {
   "use server";
   const id = String(formData.get("id") || "");
   const name = String(formData.get("name") || "").trim();
-  if (!id || !name) return { ok: false };
+  if (!id || !name) return;
   await prisma.specialty.update({ where: { id }, data: { name } });
   revalidatePath("/admin/catalog");
-  return { ok: true };
 }
-async function updateCondition(formData: FormData) {
+async function updateCondition(formData: FormData): Promise<void> {
   "use server";
   const id = String(formData.get("id") || "");
   const name = String(formData.get("name") || "").trim();
   const isCommon = String(formData.get("isCommon") || "") === "on";
-  if (!id || !name) return { ok: false };
+  if (!id || !name) return;
   await prisma.condition.update({ where: { id }, data: { name, isCommon } });
   revalidatePath("/admin/catalog");
-  return { ok: true };
 }
-async function updateProcedure(formData: FormData) {
+async function updateProcedure(formData: FormData): Promise<void> {
   "use server";
   const id = String(formData.get("id") || "");
   const name = String(formData.get("name") || "").trim();
-  if (!id || !name) return { ok: false };
+  if (!id || !name) return;
   await prisma.procedure.update({ where: { id }, data: { name } });
   revalidatePath("/admin/catalog");
-  return { ok: true };
 }
 
 // DELETE
-async function deleteSpecialty(formData: FormData) {
+async function deleteSpecialty(formData: FormData): Promise<void> {
   "use server";
   const id = String(formData.get("id") || "");
-  if (!id) return { ok: false };
+  if (!id) return;
   await prisma.specialty.delete({ where: { id } }).catch(() => null);
   revalidatePath("/admin/catalog");
-  return { ok: true };
 }
-async function deleteCondition(formData: FormData) {
+async function deleteCondition(formData: FormData): Promise<void> {
   "use server";
   const id = String(formData.get("id") || "");
-  if (!id) return { ok: false };
+  if (!id) return;
   await prisma.condition.delete({ where: { id } }).catch(() => null);
   revalidatePath("/admin/catalog");
-  return { ok: true };
 }
-async function deleteProcedure(formData: FormData) {
+async function deleteProcedure(formData: FormData): Promise<void> {
   "use server";
   const id = String(formData.get("id") || "");
-  if (!id) return { ok: false };
+  if (!id) return;
   await prisma.procedure.delete({ where: { id } }).catch(() => null);
   revalidatePath("/admin/catalog");
-  return { ok: true };
 }
 
 type Paging = { take: number; skip: number; page: number; q: string | null };
@@ -148,9 +142,32 @@ export default async function AdminCatalogPage({ searchParams }: { searchParams?
   const ppPage = typeof searchParams?.ppp === "string" ? searchParams?.ppp : "1";
 
   // queries
-  const spWhere = spQ ? { OR: [{ name: { contains: spQ, mode: "insensitive" } }, { slug: { contains: spQ, mode: "insensitive" } }] } : {};
-  const cpWhere = cpQ ? { OR: [{ name: { contains: cpQ, mode: "insensitive" } }, { slug: { contains: cpQ, mode: "insensitive" } }] } : {};
-  const ppWhere = ppQ ? { OR: [{ name: { contains: ppQ, mode: "insensitive" } }, { slug: { contains: ppQ, mode: "insensitive" } }] } : {};
+  const insensitive: Prisma.QueryMode = "insensitive";
+
+  const spWhere: Prisma.SpecialtyWhereInput | undefined = spQ
+    ? {
+        OR: [
+          { name: { contains: spQ, mode: insensitive } },
+          { slug: { contains: spQ, mode: insensitive } }
+        ]
+      }
+    : undefined;
+  const cpWhere: Prisma.ConditionWhereInput | undefined = cpQ
+    ? {
+        OR: [
+          { name: { contains: cpQ, mode: insensitive } },
+          { slug: { contains: cpQ, mode: insensitive } }
+        ]
+      }
+    : undefined;
+  const ppWhere: Prisma.ProcedureWhereInput | undefined = ppQ
+    ? {
+        OR: [
+          { name: { contains: ppQ, mode: insensitive } },
+          { slug: { contains: ppQ, mode: insensitive } }
+        ]
+      }
+    : undefined;
 
   const [spCount, cpCount, ppCount] = await Promise.all([
     prisma.specialty.count({ where: spWhere }),

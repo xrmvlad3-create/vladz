@@ -1,15 +1,17 @@
 import { prisma } from "@lib/prisma";
+import type { Prisma } from "@prisma/client";
 
 async function getData(q: string | null, limit = 200) {
   try {
-    const where = q
+    const insensitive: Prisma.QueryMode = "insensitive";
+    const where: Prisma.ConditionWhereInput | undefined = q
       ? {
           OR: [
-            { name: { contains: q, mode: "insensitive" } },
-            { slug: { contains: q, mode: "insensitive" } }
+            { name: { contains: q, mode: insensitive } },
+            { slug: { contains: q, mode: insensitive } }
           ]
         }
-      : {};
+      : undefined;
     const [items, total] = await Promise.all([
       prisma.condition.findMany({
         where,

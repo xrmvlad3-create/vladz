@@ -3,11 +3,14 @@ import { authOptions } from "@lib/auth";
 import { prisma } from "@lib/prisma";
 import { revalidatePath } from "next/cache";
 import { DocStatus, Language, Visibility } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 
-async function upsertConditionText(formData: FormData) {
+export const dynamic = "force-dynamic";
+
+async function upsertConditionText(formData: FormData): Promise<void> {
   "use server";
   const session = await getServerSession(authOptions);
-  if (!session) return { ok: false };
+  if (!session) return;
 
   const conditionSlug = String(formData.get("conditionSlug") || "").trim().toLowerCase();
   const language = (String(formData.get("language") || "ro") as "ro" | "en");
@@ -22,42 +25,45 @@ async function upsertConditionText(formData: FormData) {
   const treatmentsMd = String(formData.get("treatmentsMd") || "").trim() || null;
 
   const cond = await prisma.condition.findUnique({ where: { slug: conditionSlug } });
-  if (!cond) return { ok: false, error: "Condinția nu există" };
+  if (!cond) return;
 
   let teamId: string | null = null;
   if (teamSlug) {
     const team = await prisma.team.findUnique({ where: { slug: teamSlug }, include: { members: true, owner: true } });
-    if (!team) return { ok: false, error: "Echipa nu există" };
+    if (!team) return;
     const me = await prisma.user.findUnique({ where: { email: session.user?.email || "" } });
-    if (!me) return { ok: false };
+    if (!me) return;
     const allowed = team.ownerId === me.id || team.members.some(m => m.userId === me.id);
-    if (!allowed) return { ok: false, error: "Nu ești membru al echipei" };
+    if (!allowed) return;
     teamId = team.id;
   }
 
   const me = await prisma.user.findUnique({ where: { email: session.user?.email || "" } });
+  if (!me) return;
+
+  const languageEnum = language === "ro" ? Language.ro : Language.en;
+  const visibilityEnum = Visibility[visibility];
 
   await prisma.conditionText.upsert({
-    where: { conditionId_language_version: { conditionId: cond.id, language: language === "ro" ? Language.ro : Language.en, version } },
+    where: { conditionId_language_version: { conditionId: cond.id, language: languageEnum, version } },
     update: {
-      visibility: visibility as any,
+      visibility: visibilityEnum,
       teamId,
       title, summaryMd, clinicalMd, diagnosticsMd, managementMd, treatmentsMd
     },
     create: {
       conditionId: cond.id,
-      language: language === "ro" ? Language.ro : Language.en,
+      language: languageEnum,
       version,
       status: DocStatus.draft,
-      visibility: visibility as any,
+      visibility: visibilityEnum,
       teamId,
       title, summaryMd, clinicalMd, diagnosticsMd, managementMd, treatmentsMd,
-      authorId: me?.id
+      authorId: me.id
     }
   });
 
   revalidatePath("/author/knowledge");
-  return { ok: true };
 }
 
 export default async function AuthorKnowledgePage({ searchParams }: { searchParams?: Record<string, string | string[]> }) {
@@ -84,8 +90,18 @@ export default async function AuthorKnowledgePage({ searchParams }: { searchPara
   });
 
   const cq = typeof searchParams?.cq === "string" ? searchParams?.cq : "";
+  const insensitive: Prisma.QueryMode = "insensitive";
+  const conditionFilter: Prisma.ConditionWhereInput | undefined = cq
+    ? {
+        OR: [
+          { name: { contains: cq, mode: insensitive } },
+          { slug: { contains: cq, mode: insensitive } }
+        ]
+      }
+    : undefined;
+
   const conditions = await prisma.condition.findMany({
-    where: cq ? { OR: [{ name: { contains: cq, mode: "insensitive" } }, { slug: { contains: cq, mode: "insensitive" } }] } : {},
+    where: conditionFilter,
     orderBy: [{ isCommon: "desc" }, { name: "asc" }],
     take: 50,
     include: {
