@@ -1,20 +1,23 @@
 import { prisma } from "@lib/prisma";
 import bcrypt from "bcryptjs";
+import { warnIfNoDatabase, missingDatabaseMessage } from "@lib/env";
 
 async function runSeed() {
-  // Specialty
+  if (!warnIfNoDatabase("api:seed")) {
+    throw new Error(missingDatabaseMessage());
+  }
+
   const derm = await prisma.specialty.upsert({
     where: { slug: "dermatologie" },
     update: {},
     create: { slug: "dermatologie", name: "Dermatologie" }
   });
 
-  // Conditions
   const conditions = [
-    { slug: "acnee-vulgara", name: "Acnee vulgară", isCommon: true },
+    { slug: "acnee-vulgara", name: "Acnee vulgara", isCommon: true },
     { slug: "psoriazis", name: "Psoriazis", isCommon: true },
-    { slug: "dermatita-atopica", name: "Dermatită atopică", isCommon: true },
-    { slug: "dermatita-seboreica", name: "Dermatită seboreică", isCommon: true }
+    { slug: "dermatita-atopica", name: "Dermatita atopica", isCommon: true },
+    { slug: "dermatita-seboreica", name: "Dermatita seboreica", isCommon: true }
   ];
 
   for (const c of conditions) {
@@ -25,7 +28,6 @@ async function runSeed() {
     });
   }
 
-  // Admin user
   const adminEmail = "admin@izamanagement.ro";
   const adminName = "Administrator";
   const plain = process.env.ADMIN_PASSWORD || "admin1234";
@@ -49,6 +51,7 @@ export async function POST(req: Request) {
     await runSeed();
     return new Response("ok", { status: 200 });
   } catch (e: any) {
-    return new Response(`error: ${e?.message ?? "unknown"}`, { status: 500 });
+    const message = e?.message || missingDatabaseMessage();
+    return new Response(`error: ${message}`, { status: 500 });
   }
 }

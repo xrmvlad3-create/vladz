@@ -5,7 +5,7 @@ import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 
 // CREATE
-async function createUser(formData: FormData) {
+async function createUser(formData: FormData): Promise<void> {
   "use server";
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const name = String(formData.get("name") || "").trim();
@@ -25,23 +25,23 @@ async function createUser(formData: FormData) {
 }
 
 // UPDATE
-async function updateUser(formData: FormData) {
+async function updateUser(formData: FormData): Promise<void> {
   "use server";
   const id = String(formData.get("id") || "");
   const name = String(formData.get("name") || "").trim();
   const role = String(formData.get("role") || "").trim() || "user";
-  if (!id) return { ok: false };
+  if (!id) return;
   await prisma.user.update({ where: { id }, data: { name: name || null, role } });
   revalidatePath("/admin/users");
   return { ok: true };
 }
 
 // RESET PASSWORD
-async function resetPassword(formData: FormData) {
+async function resetPassword(formData: FormData): Promise<void> {
   "use server";
   const id = String(formData.get("id") || "");
   const password = String(formData.get("password") || "");
-  if (!id || !password) return { ok: false };
+  if (!id || !password) return;
   const hash = await bcrypt.hash(password, 10);
   await prisma.user.update({ where: { id }, data: { password: hash } });
   revalidatePath("/admin/users");
@@ -49,10 +49,10 @@ async function resetPassword(formData: FormData) {
 }
 
 // DELETE
-async function deleteUser(formData: FormData) {
+async function deleteUser(formData: FormData): Promise<void> {
   "use server";
   const id = String(formData.get("id") || "");
-  if (!id) return { ok: false };
+  if (!id) return;
   await prisma.user.delete({ where: { id } }).catch(() => null);
   revalidatePath("/admin/users");
   return { ok: true };

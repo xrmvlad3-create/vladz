@@ -1,21 +1,24 @@
 import { prisma } from "@lib/prisma";
+import { hasDatabaseUrl } from "@lib/env";
 
 export async function GET() {
   const hasGroq = !!process.env.GROQ_API_KEY;
   const hasRedis = !!process.env.UPSTASH_REDIS_REST_URL && !!process.env.UPSTASH_REDIS_REST_TOKEN;
 
   let dbOk = false;
-  try {
-    // lightweight, safe query that works even without tables (no-op)
-    await prisma.$queryRaw`SELECT 1`;
-    dbOk = true;
-  } catch {
-    dbOk = false;
+  if (hasDatabaseUrl()) {
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      dbOk = true;
+    } catch (e) {
+      console.warn("api/health", e instanceof Error ? e.message : e);
+      dbOk = false;
+    }
   }
 
   const body = JSON.stringify({
     status: "healthy",
-    db: dbOk ? "ok" : "not-configured",
+    db: dbOk ? "ok" : hasDatabaseUrl() ? "error" : "not-configured",
     ai: hasGroq ? "configured" : "not-configured",
     redis: hasRedis ? "configured" : "not-configured",
     time: new Date().toISOString()

@@ -4,10 +4,10 @@ import { prisma } from "@lib/prisma";
 import { revalidatePath } from "next/cache";
 import { Language, Visibility } from "@prisma/client";
 
-async function createOrUpdateCourse(formData: FormData) {
+async function createOrUpdateCourse(formData: FormData): Promise<void> {
   "use server";
   const session = await getServerSession(authOptions);
-  if (!session) return { ok: false };
+  if (!session) return;
 
   const slug = String(formData.get("slug") || "").trim().toLowerCase();
   const title = String(formData.get("title") || "").trim();
@@ -17,7 +17,7 @@ async function createOrUpdateCourse(formData: FormData) {
   const visibility = (String(formData.get("visibility") || "team") as "private" | "team" | "public");
   const teamSlug = String(formData.get("teamSlug") || "").trim().toLowerCase();
 
-  if (!slug || !title || !specialtySlug) return { ok: false };
+  if (!slug || !title || !specialtySlug) return;
 
   const [me, sp, team] = await Promise.all([
     prisma.user.findUnique({ where: { email: session.user?.email || "" } }),
@@ -25,7 +25,7 @@ async function createOrUpdateCourse(formData: FormData) {
     teamSlug ? prisma.team.findUnique({ where: { slug: teamSlug } }) : Promise.resolve(null)
   ]);
 
-  if (!me || !sp) return { ok: false, error: "owner or specialty not found" };
+  if (!me || !sp) { console.warn("author:courses", "owner or specialty not found"); return; }
 
   // verify membership if team set
   if (team) {
@@ -61,28 +61,28 @@ async function createOrUpdateCourse(formData: FormData) {
   return { ok: true };
 }
 
-async function addLesson(formData: FormData) {
+async function addLesson(formData: FormData): Promise<void> {
   "use server";
   const session = await getServerSession(authOptions);
-  if (!session) return { ok: false };
+  if (!session) return;
   const courseSlug = String(formData.get("courseSlug") || "").trim().toLowerCase();
   const title = String(formData.get("title") || "").trim();
   const contentMd = String(formData.get("contentMd") || "").trim();
   const order = parseInt(String(formData.get("order") || "1"), 10) || 1;
-  if (!courseSlug || !title) return { ok: false };
+  if (!courseSlug || !title) return;
 
   const me = await prisma.user.findUnique({ where: { email: session.user?.email || "" } });
-  if (!me) return { ok: false };
+  if (!me) return;
   const course = await prisma.course.findUnique({ where: { slug: courseSlug } });
-  if (!course) return { ok: false, error: "course not found" };
+  if (!course) { console.warn("author:courses", "course not found", courseSlug); return; }
 
   // only owner or team member if team visibility
   if (course.ownerId !== me.id) {
-    if (!course.teamId) return { ok: false };
+    if (!course.teamId) return;
     const member = await prisma.teamMember.findFirst({ where: { teamId: course.teamId, userId: me.id } });
     const team = await prisma.team.findUnique({ where: { id: course.teamId } });
     const allowed = member || team?.ownerId === me.id;
-    if (!allowed) return { ok: false };
+    if (!allowed) return;
   }
 
   await prisma.lesson.create({
@@ -98,16 +98,16 @@ async function addLesson(formData: FormData) {
   return { ok: true };
 }
 
-async function deleteCourse(formData: FormData) {
+async function deleteCourse(formData: FormData): Promise<void> {
   "use server";
   const session = await getServerSession(authOptions);
-  if (!session) return { ok: false };
+  if (!session) return;
   const slug = String(formData.get("slug") || "").trim().toLowerCase();
-  if (!slug) return { ok: false };
+  if (!slug) return;
   const me = await prisma.user.findUnique({ where: { email: session.user?.email || "" } });
-  if (!me) return { ok: false };
+  if (!me) return;
   const course = await prisma.course.findUnique({ where: { slug } });
-  if (!course) return { ok: false };
+  if (!course) return;
   if (course.ownerId !== me.id) return { ok: false, error: "doar owner poate șterge" };
   await prisma.course.delete({ where: { slug } }).catch(() => null);
   revalidatePath("/author/courses");

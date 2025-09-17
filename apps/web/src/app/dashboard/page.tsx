@@ -1,6 +1,15 @@
 import { prisma } from "@lib/prisma";
+import { hasDatabaseUrl, missingDatabaseMessage } from "@lib/env";
 
-async function getCounts() {
+export const dynamic = "force-dynamic";
+
+type Stats = { specialties: number; conditions: number; procedures: number; courses: number; ok: boolean };
+
+async function getCounts(): Promise<Stats> {
+  if (!hasDatabaseUrl()) {
+    return { specialties: 0, conditions: 0, procedures: 0, courses: 0, ok: false };
+  }
+
   try {
     const [specialties, conditions, procedures, courses] = await Promise.all([
       prisma.specialty.count(),
@@ -10,6 +19,7 @@ async function getCounts() {
     ]);
     return { specialties, conditions, procedures, courses, ok: true };
   } catch (e) {
+    console.warn("dashboard:getCounts", e instanceof Error ? e.message : e);
     return { specialties: 0, conditions: 0, procedures: 0, courses: 0, ok: false };
   }
 }
@@ -23,15 +33,14 @@ export default async function DashboardPage() {
         <h2 style={{ fontSize: 18, fontWeight: 600 }}>Dashboard</h2>
         {!stats.ok && (
           <p style={{ color: "#b91c1c", marginTop: 8 }}>
-            Database not connected. Set DATABASE_URL in Vercel (or .env) and deploy. Run migrations with
-            <code> prisma migrate deploy</code> and seed with <code>npm run seed</code>.
+            {missingDatabaseMessage()} Configure migrations cu <code>npx prisma migrate deploy</code> si seed cu <code>npm run seed</code> dupa ce setezi conexiunea.
           </p>
         )}
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12 }}>
-        <Card title="Specialități" value={stats.specialties} />
-        <Card title="Afecțiuni" value={stats.conditions} />
+        <Card title="Specialitati" value={stats.specialties} />
+        <Card title="Afectiuni" value={stats.conditions} />
         <Card title="Proceduri" value={stats.procedures} />
         <Card title="Cursuri" value={stats.courses} />
       </div>
@@ -39,8 +48,8 @@ export default async function DashboardPage() {
       <section style={{ marginTop: 24 }}>
         <h3 style={{ fontWeight: 600, marginBottom: 8 }}>Resurse</h3>
         <ul style={{ listStyle: "disc", marginLeft: 18 }}>
-          <li>API de sănătate: <a href="/api/health" style={{ color: "#2563eb" }}>/api/health</a></li>
-          <li>Seed API (protejată cu SEED_SECRET): <code>/api/seed</code></li>
+          <li>API de sanatate: <a href="/api/health" style={{ color: "#2563eb" }}>/api/health</a></li>
+          <li>Seed API (protejat cu SEED_SECRET): <code>/api/seed</code></li>
         </ul>
       </section>
     </main>

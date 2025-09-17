@@ -22,3 +22,9 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+# Node/Next.js artifacts
+node_modules/
+**/node_modules/
+.next/
+**/.next/
+

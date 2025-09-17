@@ -1,10 +1,10 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const [email, setEmail] = useState("");
@@ -22,7 +22,7 @@ export default function LoginPage() {
       callbackUrl
     });
     if (res?.error) {
-      setError("Email sau parolă incorecte.");
+      setError("Email sau parola incorecte.");
     } else {
       router.push(callbackUrl);
     }
@@ -43,12 +43,12 @@ export default function LoginPage() {
           />
         </label>
         <label>
-          <div style={{ fontSize: 12, color: "#6b7280" }}>Parolă</div>
+          <div style={{ fontSize: 12, color: "#6b7280" }}>Parola</div>
           <input
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             type="password"
-            placeholder="••••••••"
+            placeholder="********"
             style={{ width: "100%", border: "1px solid #e5e7eb", borderRadius: 6, padding: "10px 12px" }}
           />
         </label>
@@ -63,7 +63,7 @@ export default function LoginPage() {
             fontWeight: 600
           }}
         >
-          Intră în cont
+          Intra in cont
         </button>
       </form>
 
@@ -71,5 +71,13 @@ export default function LoginPage() {
         Nu ai cont? <a href="/request-access" style={{ color: "#2563eb", fontWeight: 600 }}>Cere acces</a>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<main>Se incarca...</main>}>
+      <LoginForm />
+    </Suspense>
   );
 }

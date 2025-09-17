@@ -7,7 +7,7 @@ async function updateStatusAction(formData: FormData) {
   "use server";
   const id = String(formData.get("id") || "");
   const status = String(formData.get("status") || "new");
-  if (!id) return { ok: false };
+  if (!id) return;
   await prisma.requestAccess.update({ where: { id }, data: { status } }).catch(() => {});
   revalidatePath("/admin/requests");
   return { ok: true };
@@ -16,7 +16,7 @@ async function updateStatusAction(formData: FormData) {
 async function deleteAction(formData: FormData) {
   "use server";
   const id = String(formData.get("id") || "");
-  if (!id) return { ok: false };
+  if (!id) return;
   await prisma.requestAccess.delete({ where: { id } }).catch(() => {});
   revalidatePath("/admin/requests");
   return { ok: true };

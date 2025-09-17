@@ -1,6 +1,6 @@
 export const metadata = {
   title: "IzaManagement",
-  description: "Medical platform — Next.js preview",
+  description: "Medical knowledge base and AI assistant preview built with Next.js"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -14,7 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <a href="/" style={{ color: "#2563eb" }}>Home</a>
               <a href="/request-access" style={{ color: "#2563eb" }}>Cere acces</a>
               <a href="/dashboard" style={{ color: "#2563eb" }}>Dashboard</a>
-              <a href="/conditions" style={{ color: "#2563eb" }}>Afecțiuni</a>
+              <a href="/conditions" style={{ color: "#2563eb" }}>Afectiuni</a>
               <a href="/procedures" style={{ color: "#2563eb" }}>Proceduri</a>
               <a href="/courses" style={{ color: "#2563eb" }}>Cursuri</a>
               <a href="/ai" style={{ color: "#2563eb" }}>AI</a>
@@ -25,7 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </header>
           {children}
           <footer style={{ marginTop: 32, color: "#6b7280", fontSize: 12 }}>
-            Next.js fullstack scaffold. Connect Postgres (Neon/Vercel Postgres) via DATABASE_URL.
+            Next.js fullstack scaffold. Conecteaza Postgres (Neon sau Vercel Postgres) prin variabila DATABASE_URL.
           </footer>
         </div>
       </body>
